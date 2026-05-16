@@ -1,35 +1,21 @@
-# GarageFlow
+# Nika's App
 
-GarageFlow is a repair-shop workflow app for small garages and service centers.
+A playful block-world themed app for a 6-year-old child.
 
-The MVP will focus on:
+## Features
 
-- staff login
-- customers and vehicles
-- repair jobs and status tracking
-- technician inspections
-- estimates and customer approvals
-- invoices and service history
+- Memory Match game
+- Bubble Pop game
+- Drawing Pad with colors and brush size
+- Roblox-themed `Blocky Friends` gallery with original characters only
 
-## Product Direction
+The gallery artwork is intentionally original and does not use Roblox logos or exact copyrighted characters.
 
-GarageFlow aims to replace paper job cards, chat threads, and spreadsheets with one workflow built for front desk staff, technicians, managers, and customers.
+## Development
 
-## Planned MVP Stack
+```bash
+npm install
+npm run dev
+```
 
-- Next.js App Router
-- TypeScript
-- Supabase for auth, database, and storage
-- Tailwind CSS and shadcn/ui for the admin interface
-- Vercel for deployment
-
-## Current Status
-
-This repository has been reset to start fresh with GarageFlow. The implementation scaffold has not been generated yet.
-
-## Next Build Slice
-
-1. Set up the Next.js app shell and login flow.
-2. Create the Supabase schema and row-level security.
-3. Build customers, vehicles, and jobs CRUD.
-4. Add the jobs board and job detail skeleton.
+Open `http://127.0.0.1:3000`.

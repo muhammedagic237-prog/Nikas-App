@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GarageFlow",
-  description: "Repair-shop workflow app for small garages and service centers."
+  title: "Nika's App",
+  description: "A block-world game and drawing app for Nika."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
