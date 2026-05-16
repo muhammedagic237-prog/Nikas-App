@@ -5,20 +5,30 @@ import { useEffect, useMemo, useRef, useState } from "react";
 type Section = "games" | "drawing" | "roblox";
 type Card = { id: number; value: string; matched: boolean };
 type BubbleColor = "pink" | "blue" | "green" | "yellow" | "purple";
-type BoardBubble = { id: number; color: BubbleColor; popping?: boolean };
-type FlyingBubble = {
+type GameBubble = {
+  id: number;
   color: BubbleColor;
-  fromX: number;
-  fromY: number;
-  toX: number;
-  toY: number;
+  x: number;
+  y: number;
+  radius: number;
+  speed: number;
+  wobble: number;
+  wobbleSpeed: number;
+};
+type SplashParticle = {
+  id: number;
+  color: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  life: number;
 };
 
 const memorySymbols = ["gem", "star", "heart", "cube", "gem", "star", "heart", "cube"];
 const paintColors = ["#ff4f8b", "#31a8ff", "#6dde47", "#ffd336", "#8e5cff", "#202a44"];
 const bubbleColors: BubbleColor[] = ["pink", "blue", "green", "yellow", "purple"];
-const bubbleCols = 7;
-const bubbleRows = 6;
 const galleryFriends = [
   "Pink Explorer",
   "Blue Builder",
@@ -36,12 +46,8 @@ export default function HomePage() {
   const [cards, setCards] = useState<Card[]>(() => shuffleCards());
   const [openCards, setOpenCards] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
-  const [bubbleBoard, setBubbleBoard] = useState<(BoardBubble | null)[]>(() => createBubbleBoard());
-  const [bubbleScore, setBubbleScore] = useState(0);
-  const [currentBubble, setCurrentBubble] = useState<BubbleColor>("pink");
-  const [nextBubble, setNextBubble] = useState<BubbleColor>("blue");
-  const [aim, setAim] = useState(0);
-  const [flyingBubble, setFlyingBubble] = useState<FlyingBubble | null>(null);
+  const [poppedBubbles, setPoppedBubbles] = useState(0);
+  const [bubbleResetKey, setBubbleResetKey] = useState(0);
   const [paintColor, setPaintColor] = useState(paintColors[0]);
   const [brushSize, setBrushSize] = useState(8);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -102,57 +108,8 @@ export default function HomePage() {
   }
 
   function resetBubbles() {
-    setBubbleBoard(createBubbleBoard());
-    setBubbleScore(0);
-    setCurrentBubble(randomBubbleColor());
-    setNextBubble(randomBubbleColor());
-    setAim(0);
-    setFlyingBubble(null);
-  }
-
-  function shootBubble() {
-    if (flyingBubble) return;
-
-    const targetCol = Math.max(0, Math.min(bubbleCols - 1, Math.round(3 + aim / 15)));
-    const targetIndex = findBubbleLanding(bubbleBoard, targetCol);
-    if (targetIndex === -1) return;
-
-    const col = targetIndex % bubbleCols;
-    const row = Math.floor(targetIndex / bubbleCols);
-    const shotColor = currentBubble;
-
-    setFlyingBubble({
-      color: shotColor,
-      fromX: 50,
-      fromY: 90,
-      toX: 7 + col * 14.2,
-      toY: 7 + row * 13.5
-    });
-
-    window.setTimeout(() => {
-      setBubbleBoard((current) => {
-        const placed = [...current];
-        placed[targetIndex] = { id: Date.now(), color: shotColor };
-        const cluster = findBubbleCluster(placed, targetIndex, shotColor);
-
-        if (cluster.length >= 3) {
-          window.setTimeout(() => {
-            setBubbleBoard((latest) => latest.map((bubble) => (bubble?.popping ? null : bubble)));
-            setBubbleScore((score) => score + cluster.length * 10);
-          }, 310);
-
-          return placed.map((bubble, index) =>
-            bubble && cluster.includes(index) ? { ...bubble, popping: true } : bubble
-          );
-        }
-
-        return placed;
-      });
-
-      setCurrentBubble(nextBubble);
-      setNextBubble(randomBubbleColor());
-      setFlyingBubble(null);
-    }, 430);
+    setPoppedBubbles(0);
+    setBubbleResetKey((key) => key + 1);
   }
 
   function canvasPoint(event: React.PointerEvent<HTMLCanvasElement>) {
@@ -203,11 +160,11 @@ export default function HomePage() {
   }
 
   const rewardText = useMemo(() => {
-    if (allMatched && bubbleScore >= 80) return "Super builder";
+    if (allMatched && poppedBubbles >= 20) return "Super builder";
     if (allMatched) return "Memory master";
-    if (bubbleScore >= 80) return "Bubble hero";
+    if (poppedBubbles >= 20) return "Bubble hero";
     return "Ready to play";
-  }, [allMatched, bubbleScore]);
+  }, [allMatched, poppedBubbles]);
 
   return (
     <main className="nika-app">
@@ -229,7 +186,7 @@ export default function HomePage() {
           ))}
         </nav>
         <div className="score-card" aria-label={`Nika status: ${rewardText}`}>
-          <strong>{matchedCount / 2 + Math.floor(bubbleScore / 20)}</strong>
+          <strong>{matchedCount / 2 + poppedBubbles}</strong>
           <span>{rewardText}</span>
         </div>
       </header>
@@ -276,65 +233,15 @@ export default function HomePage() {
 
               <GameShell
                 title="Bubble Pop"
-                detail={`${bubbleScore} points`}
+                detail={`${poppedBubbles} bubbles popped`}
                 action="Reset"
                 onAction={resetBubbles}
               >
-                <div className="bubble-stage" aria-label="Bubble shooter game">
-                  <div className="bubble-board">
-                    {bubbleBoard.map((bubble, index) => (
-                      <span
-                        className={
-                          bubble ? `board-bubble ${bubble.color} ${bubble.popping ? "popping" : ""}` : "board-slot"
-                        }
-                        key={`${bubble?.id ?? "empty"}-${index}`}
-                        aria-hidden="true"
-                      />
-                    ))}
-                  </div>
-                  <span
-                    className="aim-beam"
-                    style={{ transform: `translateX(-50%) rotate(${aim}deg)` }}
-                    aria-hidden="true"
-                  />
-                  {flyingBubble && (
-                    <span
-                      className={`flying-bubble ${flyingBubble.color}`}
-                      style={
-                        {
-                          "--from-x": `${flyingBubble.fromX}%`,
-                          "--from-y": `${flyingBubble.fromY}%`,
-                          "--to-x": `${flyingBubble.toX}%`,
-                          "--to-y": `${flyingBubble.toY}%`
-                        } as React.CSSProperties
-                      }
-                      aria-hidden="true"
-                    />
-                  )}
-                  <div className="launcher">
-                    <button
-                      aria-label="Aim left"
-                      onClick={() => setAim((value) => Math.max(value - 15, -45))}
-                      type="button"
-                    >
-                      Left
-                    </button>
-                    <div className="cannon" aria-label={`Current bubble ${currentBubble}`}>
-                      <span className={`next-shot ${currentBubble}`} />
-                    </div>
-                    <button
-                      aria-label="Aim right"
-                      onClick={() => setAim((value) => Math.min(value + 15, 45))}
-                      type="button"
-                    >
-                      Right
-                    </button>
-                    <button className="shoot-button" onClick={shootBubble} type="button">
-                      Shoot
-                    </button>
-                    <span className={`queued-bubble ${nextBubble}`} aria-label={`Next bubble ${nextBubble}`} />
-                  </div>
-                </div>
+                <BubblePopGame
+                  onPop={() => setPoppedBubbles((count) => count + 1)}
+                  popped={poppedBubbles}
+                  resetKey={bubbleResetKey}
+                />
               </GameShell>
             </div>
           )}
@@ -416,6 +323,247 @@ function GameShell({
       </div>
       {children}
     </article>
+  );
+}
+
+function BubblePopGame({
+  onPop,
+  popped,
+  resetKey
+}: {
+  onPop: () => void;
+  popped: number;
+  resetKey: number;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const bubblesRef = useRef<GameBubble[]>([]);
+  const particlesRef = useRef<SplashParticle[]>([]);
+  const runningRef = useRef(false);
+  const animationRef = useRef<number | null>(null);
+  const lastFrameRef = useRef(0);
+  const spawnTimerRef = useRef(0);
+  const nextIdRef = useRef(1);
+  const [running, setRunning] = useState(false);
+  const [missed, setMissed] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [splashText, setSplashText] = useState("");
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    function resize() {
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const scale = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(rect.width * scale);
+      canvas.height = Math.floor(rect.height * scale);
+      const context = canvas.getContext("2d");
+      context?.setTransform(scale, 0, 0, scale, 0, 0);
+      drawScene(performance.now());
+    }
+
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    stopGame();
+    bubblesRef.current = [];
+    particlesRef.current = [];
+    setRunning(false);
+    setMissed(0);
+    setCombo(0);
+    setSplashText("");
+    drawScene(performance.now());
+  }, [resetKey]);
+
+  useEffect(() => {
+    return () => stopGame();
+  }, []);
+
+  function startGame() {
+    bubblesRef.current = [];
+    particlesRef.current = [];
+    spawnTimerRef.current = 0;
+    lastFrameRef.current = performance.now();
+    runningRef.current = true;
+    setRunning(true);
+    setMissed(0);
+    setCombo(0);
+    setSplashText("");
+    for (let index = 0; index < 4; index += 1) {
+      bubblesRef.current.push(createCanvasBubble(canvasSize().width, canvasSize().height, index * 90));
+    }
+    animationRef.current = requestAnimationFrame(tick);
+  }
+
+  function stopGame() {
+    runningRef.current = false;
+    if (animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+  }
+
+  function tick(now: number) {
+    const { width, height } = canvasSize();
+    const delta = Math.min((now - lastFrameRef.current) / 1000, 0.04);
+    lastFrameRef.current = now;
+    spawnTimerRef.current += delta;
+
+    const spawnEvery = Math.max(0.42, 0.95 - popped * 0.012);
+    if (spawnTimerRef.current >= spawnEvery) {
+      spawnTimerRef.current = 0;
+      bubblesRef.current.push(createCanvasBubble(width, height));
+    }
+
+    bubblesRef.current = bubblesRef.current
+      .map((bubble) => ({
+        ...bubble,
+        y: bubble.y - bubble.speed * delta,
+        x: bubble.x + Math.sin(now / 420 + bubble.wobble) * bubble.wobbleSpeed * delta
+      }))
+      .filter((bubble) => {
+        const visible = bubble.y + bubble.radius > -20;
+        if (!visible) {
+          setMissed((count) => count + 1);
+          setCombo(0);
+        }
+        return visible;
+      });
+
+    particlesRef.current = particlesRef.current
+      .map((particle) => ({
+        ...particle,
+        x: particle.x + particle.vx * delta,
+        y: particle.y + particle.vy * delta,
+        vy: particle.vy + 180 * delta,
+        radius: particle.radius * 0.985,
+        life: particle.life - delta
+      }))
+      .filter((particle) => particle.life > 0 && particle.radius > 1);
+
+    drawScene(now);
+    if (runningRef.current) animationRef.current = requestAnimationFrame(tick);
+  }
+
+  function drawScene(now: number) {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    context.clearRect(0, 0, width, height);
+
+    const sky = context.createLinearGradient(0, 0, 0, height);
+    sky.addColorStop(0, "#bff4ff");
+    sky.addColorStop(0.58, "#49c8ff");
+    sky.addColorStop(1, "#168fe1");
+    context.fillStyle = sky;
+    context.fillRect(0, 0, width, height);
+
+    drawWaterBackground(context, width, height, now);
+
+    for (const bubble of bubblesRef.current) {
+      drawBubble(context, bubble, now);
+    }
+
+    for (const particle of particlesRef.current) {
+      context.save();
+      context.globalAlpha = Math.max(particle.life, 0);
+      context.fillStyle = particle.color;
+      context.beginPath();
+      context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+      context.fill();
+      context.strokeStyle = "rgba(255,255,255,0.78)";
+      context.lineWidth = 2;
+      context.stroke();
+      context.restore();
+    }
+
+    if (!runningRef.current) {
+      context.fillStyle = "rgba(16, 33, 74, 0.18)";
+      context.fillRect(0, 0, width, height);
+    }
+  }
+
+  function handlePointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (!runningRef.current) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    let hitIndex = -1;
+
+    for (let index = bubblesRef.current.length - 1; index >= 0; index -= 1) {
+      const bubble = bubblesRef.current[index];
+      const distance = Math.hypot(bubble.x - x, bubble.y - y);
+      if (distance <= bubble.radius + 10) {
+        hitIndex = index;
+        break;
+      }
+    }
+
+    if (hitIndex === -1) {
+      setCombo(0);
+      return;
+    }
+
+    const [bubble] = bubblesRef.current.splice(hitIndex, 1);
+    particlesRef.current.push(...createSplash(bubble));
+    onPop();
+    setCombo((current) => {
+      const next = current + 1;
+      setSplashText(next >= 5 ? "Splash streak!" : "Pop!");
+      window.setTimeout(() => setSplashText(""), 520);
+      return next;
+    });
+  }
+
+  function canvasSize() {
+    const canvas = canvasRef.current;
+    const rect = canvas?.getBoundingClientRect();
+    return { width: rect?.width ?? 360, height: rect?.height ?? 560 };
+  }
+
+  return (
+    <div className="bubble-game">
+      <div className="bubble-game-hud">
+        <div>
+          <span>Popped</span>
+          <strong>{popped}</strong>
+        </div>
+        <div>
+          <span>Missed</span>
+          <strong>{missed}</strong>
+        </div>
+        <div>
+          <span>Combo</span>
+          <strong>{combo}</strong>
+        </div>
+      </div>
+      <canvas
+        aria-label="Bubble Pop play area"
+        className="bubble-canvas"
+        onPointerDown={handlePointerDown}
+        ref={canvasRef}
+      />
+      {!running && (
+        <button className="start-bubbles" onClick={startGame} type="button">
+          Start bubbles
+        </button>
+      )}
+      {splashText && <strong className="canvas-splash">{splashText}</strong>}
+    </div>
   );
 }
 
@@ -533,64 +681,118 @@ function cardSymbol(value: string) {
   return symbols[value];
 }
 
-function createBubbleBoard() {
-  return Array.from({ length: bubbleCols * bubbleRows }, (_, index) => {
-    const row = Math.floor(index / bubbleCols);
-    if (row > 2) return null;
-    return {
-      id: index,
-      color: bubbleColors[(index + row * 2) % bubbleColors.length]
-    };
-  });
-}
-
 function randomBubbleColor(): BubbleColor {
   return bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
 }
 
-function findBubbleLanding(board: (BoardBubble | null)[], col: number) {
-  for (let row = bubbleRows - 1; row >= 0; row--) {
-    const index = row * bubbleCols + col;
-    if (!board[index]) return index;
-  }
-  return -1;
+function createCanvasBubble(width: number, height: number, yOffset = 0): GameBubble {
+  const radius = 28 + Math.random() * 22;
+  return {
+    id: Date.now() + nextRandomId(),
+    color: randomBubbleColor(),
+    x: radius + Math.random() * Math.max(width - radius * 2, radius),
+    y: height + radius + yOffset,
+    radius,
+    speed: 92 + Math.random() * 92,
+    wobble: Math.random() * Math.PI * 2,
+    wobbleSpeed: 28 + Math.random() * 34
+  };
 }
 
-function findBubbleCluster(board: (BoardBubble | null)[], startIndex: number, color: BubbleColor) {
-  const seen = new Set<number>();
-  const stack = [startIndex];
+function nextRandomId() {
+  return Math.floor(Math.random() * 1000000);
+}
 
-  while (stack.length) {
-    const index = stack.pop();
-    if (index === undefined || seen.has(index)) continue;
-    const bubble = board[index];
-    if (!bubble || bubble.color !== color) continue;
-
-    seen.add(index);
-    for (const neighbor of bubbleNeighbors(index)) {
-      if (!seen.has(neighbor)) stack.push(neighbor);
+function drawWaterBackground(context: CanvasRenderingContext2D, width: number, height: number, now: number) {
+  context.save();
+  context.globalAlpha = 0.24;
+  context.strokeStyle = "#ffffff";
+  context.lineWidth = 3;
+  for (let line = 0; line < 7; line += 1) {
+    const y = 70 + line * 78;
+    context.beginPath();
+    for (let x = -20; x <= width + 20; x += 20) {
+      const wave = Math.sin(x / 44 + now / 900 + line) * 8;
+      if (x === -20) context.moveTo(x, y + wave);
+      else context.lineTo(x, y + wave);
     }
+    context.stroke();
   }
-
-  return Array.from(seen);
+  context.globalAlpha = 0.2;
+  for (let index = 0; index < 16; index += 1) {
+    const x = ((index * 83 + now / 38) % (width + 80)) - 40;
+    const y = 30 + ((index * 57) % Math.max(height - 80, 100));
+    context.beginPath();
+    context.arc(x, y, 5 + (index % 4) * 3, 0, Math.PI * 2);
+    context.stroke();
+  }
+  context.restore();
 }
 
-function bubbleNeighbors(index: number) {
-  const row = Math.floor(index / bubbleCols);
-  const col = index % bubbleCols;
-  const offsets = [
-    [0, -1],
-    [0, 1],
-    [-1, 0],
-    [1, 0],
-    [-1, row % 2 === 0 ? -1 : 1],
-    [1, row % 2 === 0 ? -1 : 1]
-  ];
+function drawBubble(context: CanvasRenderingContext2D, bubble: GameBubble, now: number) {
+  const colors = bubblePalette(bubble.color);
+  const pulse = Math.sin(now / 180 + bubble.wobble) * 1.4;
+  const radius = bubble.radius + pulse;
+  const gradient = context.createRadialGradient(
+    bubble.x - radius * 0.32,
+    bubble.y - radius * 0.38,
+    radius * 0.08,
+    bubble.x,
+    bubble.y,
+    radius
+  );
+  gradient.addColorStop(0, "rgba(255,255,255,0.96)");
+  gradient.addColorStop(0.22, colors.light);
+  gradient.addColorStop(0.72, colors.base);
+  gradient.addColorStop(1, colors.dark);
 
-  return offsets
-    .map(([rowOffset, colOffset]) => [row + rowOffset, col + colOffset])
-    .filter(([nextRow, nextCol]) => nextRow >= 0 && nextRow < bubbleRows && nextCol >= 0 && nextCol < bubbleCols)
-    .map(([nextRow, nextCol]) => nextRow * bubbleCols + nextCol);
+  context.save();
+  context.shadowColor = "rgba(16, 33, 74, 0.24)";
+  context.shadowBlur = 18;
+  context.shadowOffsetY = 8;
+  context.fillStyle = gradient;
+  context.beginPath();
+  context.arc(bubble.x, bubble.y, radius, 0, Math.PI * 2);
+  context.fill();
+  context.shadowColor = "transparent";
+  context.lineWidth = 3;
+  context.strokeStyle = "rgba(255,255,255,0.82)";
+  context.stroke();
+
+  context.fillStyle = "rgba(255,255,255,0.72)";
+  context.beginPath();
+  context.ellipse(bubble.x - radius * 0.3, bubble.y - radius * 0.34, radius * 0.22, radius * 0.13, -0.5, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+}
+
+function createSplash(bubble: GameBubble) {
+  const colors = bubblePalette(bubble.color);
+  return Array.from({ length: 28 }, (_, index) => {
+    const angle = (Math.PI * 2 * index) / 28 + Math.random() * 0.35;
+    const speed = 95 + Math.random() * 210;
+    return {
+      id: Date.now() + index,
+      color: index % 3 === 0 ? "rgba(232, 252, 255, 0.9)" : colors.light,
+      x: bubble.x,
+      y: bubble.y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 40,
+      radius: 4 + Math.random() * 8,
+      life: 0.48 + Math.random() * 0.28
+    };
+  });
+}
+
+function bubblePalette(color: BubbleColor) {
+  const palettes: Record<BubbleColor, { light: string; base: string; dark: string }> = {
+    pink: { light: "#ffc2dc", base: "#ff5aa0", dark: "#d93672" },
+    blue: { light: "#bdeeff", base: "#24a8ff", dark: "#0d61c7" },
+    green: { light: "#c8ffbf", base: "#5bdd4f", dark: "#229b36" },
+    yellow: { light: "#fff2a9", base: "#ffd336", dark: "#df9b10" },
+    purple: { light: "#dfc9ff", base: "#9a69ff", dark: "#6233c7" }
+  };
+  return palettes[color];
 }
 
 function friendTileStyle(index: number) {
