@@ -30,15 +30,22 @@ const memorySymbols = ["gem", "star", "heart", "cube", "gem", "star", "heart", "
 const paintColors = ["#ff4f8b", "#31a8ff", "#6dde47", "#ffd336", "#8e5cff", "#202a44"];
 const bubbleColors: BubbleColor[] = ["pink", "blue", "green", "yellow", "purple"];
 const galleryFriends = [
-  "Pink Explorer",
-  "Blue Builder",
-  "Forest Scout",
-  "Purple Cat Friend",
-  "Orange Inventor",
-  "Sunny Robot",
-  "Silver Knight",
-  "Red Captain",
-  "Rainbow Painter"
+  { name: "Pink Explorer", role: "Crystal cave scout", sheetIndex: 0, color: "pink" },
+  { name: "Blue Builder", role: "Tower maker", sheetIndex: 1, color: "blue" },
+  { name: "Forest Scout", role: "Treehouse guide", sheetIndex: 2, color: "green" },
+  { name: "Purple Cat Friend", role: "Moonlight jumper", sheetIndex: 3, color: "purple" },
+  { name: "Orange Inventor", role: "Gadget fixer", sheetIndex: 4, color: "orange" },
+  { name: "Sunny Robot", role: "Helpful bot", sheetIndex: 5, color: "yellow" },
+  { name: "Silver Knight", role: "Castle guard", sheetIndex: 6, color: "blue" },
+  { name: "Red Captain", role: "Treasure finder", sheetIndex: 7, color: "pink" },
+  { name: "Rainbow Painter", role: "Color creator", sheetIndex: 8, color: "purple" },
+  { name: "Star Skater", role: "Cloud ramp racer", color: "yellow" },
+  { name: "Candy Builder", role: "Sweet block designer", color: "pink" },
+  { name: "Aqua Runner", role: "Water park champion", color: "blue" },
+  { name: "Garden Mage", role: "Flower spell helper", color: "green" },
+  { name: "Pixel Princess", role: "Royal obby winner", color: "purple" },
+  { name: "Firework DJ", role: "Party stage friend", color: "orange" },
+  { name: "Cloud Pilot", role: "Sky island flyer", color: "blue" }
 ];
 
 export default function HomePage() {
@@ -292,12 +299,12 @@ export default function HomePage() {
             <div className="friend-grid small">
               {galleryFriends.slice(0, 6).map((friend, index) => (
                 <button
-                  className="friend-thumb"
-                  key={friend}
+                  className={`friend-thumb ${friend.color}`}
+                  key={friend.name}
                   onClick={() => setSection("roblox")}
-                  style={friendTileStyle(index)}
+                  style={friend.sheetIndex === undefined ? undefined : friendTileStyle(friend.sheetIndex)}
                   type="button"
-                  aria-label={`View ${friend}`}
+                  aria-label={`View ${friend.name}`}
                 />
               ))}
             </div>
@@ -662,22 +669,72 @@ function DrawingPanel({
 }
 
 function RobloxGallery() {
+  const [selected, setSelected] = useState(0);
+  const activeFriend = galleryFriends[selected];
+
+  function move(direction: -1 | 1) {
+    setSelected((current) => (current + direction + galleryFriends.length) % galleryFriends.length);
+  }
+
   return (
     <article className="roblox-panel">
       <div className="game-head">
         <div>
           <h2>Roblox</h2>
-          <p>Original blocky friends for Nika to browse. No official characters or logos.</p>
+          <p>Swipe or tap through original blocky friends. No official characters or logos.</p>
         </div>
       </div>
-      <div className="gallery-hero">
-        <img src="/assets/blocky-friends-gallery.png" alt="Nine original blocky adventure friends" />
+
+      <div className="character-viewer" aria-live="polite">
+        <button className="viewer-arrow" onClick={() => move(-1)} type="button" aria-label="Previous character">
+          Back
+        </button>
+        <div className={`viewer-card ${activeFriend.color}`}>
+          <div
+            className={`viewer-portrait ${activeFriend.color}`}
+            style={activeFriend.sheetIndex === undefined ? undefined : friendTileStyle(activeFriend.sheetIndex)}
+            aria-hidden="true"
+          />
+          <div className="viewer-copy">
+            <span>{selected + 1} / {galleryFriends.length}</span>
+            <h3>{activeFriend.name}</h3>
+            <p>{activeFriend.role}</p>
+          </div>
+        </div>
+        <button className="viewer-arrow" onClick={() => move(1)} type="button" aria-label="Next character">
+          Next
+        </button>
       </div>
+
+      <div className="swipe-rail" aria-label="Swipeable blocky friends">
+        {galleryFriends.map((friend, index) => (
+          <button
+            className={selected === index ? `rail-card active ${friend.color}` : `rail-card ${friend.color}`}
+            key={friend.name}
+            onClick={() => setSelected(index)}
+            type="button"
+            aria-label={`Open ${friend.name}`}
+          >
+            <span
+              className={`friend-thumb ${friend.color}`}
+              style={friend.sheetIndex === undefined ? undefined : friendTileStyle(friend.sheetIndex)}
+              aria-hidden="true"
+            />
+            <strong>{friend.name}</strong>
+          </button>
+        ))}
+      </div>
+
       <div className="friend-grid">
         {galleryFriends.map((friend, index) => (
-          <div className="friend-tile" key={friend}>
-            <span className="friend-thumb" style={friendTileStyle(index)} aria-hidden="true" />
-            <strong>{friend}</strong>
+          <div className={`friend-tile ${friend.color}`} key={friend.name}>
+            <span
+              className={`friend-thumb ${friend.color}`}
+              style={friend.sheetIndex === undefined ? undefined : friendTileStyle(friend.sheetIndex)}
+              aria-hidden="true"
+            />
+            <strong>{friend.name}</strong>
+            <small>{friend.role}</small>
           </div>
         ))}
       </div>
