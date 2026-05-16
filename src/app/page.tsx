@@ -42,6 +42,7 @@ const galleryFriends = [
 ];
 
 export default function HomePage() {
+  const [showSplash, setShowSplash] = useState(true);
   const [section, setSection] = useState<Section>("games");
   const [cards, setCards] = useState<Card[]>(() => shuffleCards());
   const [openCards, setOpenCards] = useState<number[]>([]);
@@ -55,6 +56,11 @@ export default function HomePage() {
 
   const matchedCount = cards.filter((card) => card.matched).length;
   const allMatched = matchedCount === cards.length;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowSplash(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -168,6 +174,20 @@ export default function HomePage() {
 
   return (
     <main className="nika-app">
+      {showSplash && (
+        <div className="splash-screen" aria-label="Nika's App loading screen">
+          <div className="splash-cubes" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+          <h1>
+            <span>Nika&apos;s</span>
+            <span>App</span>
+          </h1>
+        </div>
+      )}
       <header className="app-header">
         <a className="brand" href="#top" aria-label="Nika's App home">
           <span className="brand-avatar" aria-hidden="true" />
