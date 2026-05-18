@@ -236,6 +236,14 @@ button {
   flex-wrap: wrap;
 }
 
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .brand {
   gap: 14px;
   color: white;
@@ -270,7 +278,11 @@ button {
 .big-action,
 .wide-button,
 .game-head button,
-.sound-toggle {
+.sound-toggle,
+.parent-toggle,
+.quest-action,
+.spotlight-panel button,
+.parent-actions-panel button {
   min-height: 54px;
   border: 4px solid rgba(255, 255, 255, 0.86);
   border-radius: 12px;
@@ -296,7 +308,11 @@ button {
 .big-action:hover,
 .wide-button:hover,
 .game-head button:hover,
-.sound-toggle:hover {
+.sound-toggle:hover,
+.parent-toggle:hover,
+.quest-action:hover,
+.spotlight-panel button:hover,
+.parent-actions-panel button:hover {
   transform: translateY(-2px);
 }
 
@@ -310,6 +326,13 @@ button {
 .sound-toggle.active {
   background: linear-gradient(180deg, #74e35d, var(--green));
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--grass-dark);
+}
+
+.parent-toggle {
+  padding: 0 16px;
+  background: linear-gradient(180deg, #9e7cff, var(--purple));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 #5c35c5;
+  font-size: 0.95rem;
 }
 
 .score-card {
@@ -384,6 +407,18 @@ button {
   box-shadow: var(--shadow);
 }
 
+.menu-dashboard {
+  display: grid;
+  gap: 18px;
+}
+
+.home-layout,
+.home-primary,
+.home-side {
+  display: grid;
+  gap: 18px;
+}
+
 .menu-title span {
   display: inline-flex;
   margin-bottom: 8px;
@@ -401,10 +436,159 @@ button {
 .menu-title h1 {
   max-width: 760px;
   margin: 0;
-  font-size: clamp(2.35rem, 9vw, 5.3rem);
+  font-size: clamp(2.35rem, 8vw, 5rem);
   line-height: 0.88;
   text-transform: uppercase;
   text-shadow: 0 5px 0 rgba(17, 28, 61, 0.14);
+}
+
+.menu-title p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: clamp(0.98rem, 2.6vw, 1.08rem);
+  font-weight: 1000;
+}
+
+.progress-strip {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.progress-strip div {
+  display: grid;
+  min-height: 68px;
+  place-items: center;
+  border: 3px solid rgba(17, 28, 61, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 6px 0 rgba(17, 28, 61, 0.09);
+}
+
+.progress-strip span,
+.quest-head span,
+.quest-item small,
+.spotlight-panel span,
+.spotlight-panel small,
+.parent-summary span,
+.parent-stats span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.progress-strip strong {
+  color: var(--pink);
+  font-size: clamp(1.35rem, 4vw, 2rem);
+  line-height: 1;
+}
+
+.quest-panel,
+.spotlight-panel {
+  border: 4px solid rgba(255, 255, 255, 0.86);
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 244, 204, 0.94)),
+    linear-gradient(45deg, rgba(255, 79, 139, 0.1) 25%, transparent 25%) 0 0 / 30px 30px;
+  box-shadow: var(--shadow);
+}
+
+.quest-panel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: clamp(16px, 3vw, 20px);
+}
+
+.quest-head {
+  display: grid;
+  gap: 3px;
+}
+
+.quest-head strong,
+.spotlight-panel strong {
+  color: var(--ink);
+  font-size: clamp(1.8rem, 5vw, 2.7rem);
+  line-height: 0.9;
+  text-transform: uppercase;
+  text-shadow: 0 3px 0 rgba(17, 28, 61, 0.12);
+}
+
+.quest-meter {
+  height: 18px;
+  overflow: hidden;
+  border: 3px solid rgba(17, 28, 61, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.quest-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--green), var(--yellow), var(--pink));
+}
+
+.quest-list {
+  display: grid;
+  gap: 10px;
+}
+
+.quest-item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 9px;
+  border: 3px solid rgba(17, 28, 61, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 5px 0 rgba(17, 28, 61, 0.08);
+}
+
+.quest-item > span {
+  display: grid;
+  width: 44px;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 12px;
+  color: white;
+  background: linear-gradient(180deg, #47b6ff, var(--blue));
+  font-size: 0.82rem;
+  font-weight: 1000;
+  box-shadow: 0 5px 0 #0d55b2;
+}
+
+.quest-item.done > span {
+  background: linear-gradient(180deg, #74e35d, var(--green));
+  box-shadow: 0 5px 0 var(--grass-dark);
+}
+
+.quest-item strong {
+  display: block;
+  color: var(--ink);
+  font-size: 0.98rem;
+  line-height: 1.05;
+}
+
+.quest-item small {
+  display: block;
+  margin-top: 3px;
+}
+
+.quest-action,
+.spotlight-panel button {
+  width: 100%;
+  background: linear-gradient(180deg, #ff80ad, var(--pink));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--pink-dark);
+}
+
+.play-layout {
+  display: grid;
+  gap: 18px;
 }
 
 .menu-card-grid {
@@ -416,7 +600,7 @@ button {
 .menu-card {
   position: relative;
   display: grid;
-  min-height: clamp(230px, 48vw, 350px);
+  min-height: clamp(230px, 44vw, 320px);
   align-content: end;
   justify-items: start;
   gap: 10px;
@@ -468,8 +652,8 @@ button {
 .menu-card strong {
   position: relative;
   z-index: 1;
-  max-width: 78%;
-  font-size: clamp(2.35rem, 9vw, 4.45rem);
+  max-width: 80%;
+  font-size: clamp(2.2rem, 8vw, 4rem);
   line-height: 0.86;
   text-shadow: 0 6px 0 rgba(17, 28, 61, 0.22);
 }
@@ -480,6 +664,13 @@ button {
   font-size: clamp(1rem, 3.6vw, 1.25rem);
   font-weight: 1000;
   text-shadow: 0 3px 0 rgba(17, 28, 61, 0.14);
+}
+
+.memory-menu {
+  background:
+    radial-gradient(circle at 82% 20%, rgba(255, 255, 255, 0.86) 0 22px, transparent 23px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24), transparent 42%),
+    linear-gradient(180deg, #ff7fba, #ff8d1f);
 }
 
 .bubble-menu {
@@ -521,6 +712,48 @@ button {
   background: linear-gradient(90deg, var(--yellow), #ffffff);
 }
 
+.menu-memory-preview {
+  position: absolute;
+  right: 22px;
+  top: 22px;
+  z-index: 1;
+  display: grid;
+  width: clamp(112px, 28vw, 174px);
+  aspect-ratio: 1;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  transform: rotate(5deg);
+}
+
+.menu-memory-preview span {
+  display: grid;
+  place-items: center;
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  border-radius: 14px;
+  color: white;
+  background: rgba(17, 28, 61, 0.18);
+  box-shadow: 0 6px 0 rgba(17, 28, 61, 0.14);
+  font-size: clamp(1.2rem, 4vw, 2.15rem);
+  font-weight: 1000;
+  text-shadow: 0 3px 0 rgba(17, 28, 61, 0.22);
+}
+
+.menu-memory-preview span:nth-child(1) {
+  background: #ff5aa0;
+}
+
+.menu-memory-preview span:nth-child(2) {
+  background: #ffd336;
+}
+
+.menu-memory-preview span:nth-child(3) {
+  background: #24a8ff;
+}
+
+.menu-memory-preview span:nth-child(4) {
+  background: #5bdd4f;
+}
+
 .menu-sparkles {
   position: absolute;
   right: 28px;
@@ -546,6 +779,28 @@ button {
   background-repeat: no-repeat;
   box-shadow: 0 10px 0 rgba(17, 28, 61, 0.16), 0 22px 34px rgba(17, 28, 61, 0.16);
   animation: friendWave 1.9s ease-in-out infinite;
+}
+
+.spotlight-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: clamp(16px, 3vw, 20px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(224, 246, 255, 0.94)),
+    linear-gradient(45deg, rgba(31, 141, 255, 0.1) 25%, transparent 25%) 0 0 / 30px 30px;
+}
+
+.spotlight-avatar {
+  display: block;
+  width: min(210px, 72%);
+  aspect-ratio: 1;
+  justify-self: center;
+  border: 6px solid white;
+  border-radius: 20px;
+  background-repeat: no-repeat;
+  box-shadow: 0 10px 0 rgba(17, 28, 61, 0.14), 0 22px 34px rgba(17, 28, 61, 0.16);
+  animation: friendWave 2.1s ease-in-out infinite;
 }
 
 .app-grid {
@@ -804,6 +1059,110 @@ button {
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 #5c35c5;
 }
 
+.parent-panel {
+  display: grid;
+  gap: 18px;
+  min-height: 100%;
+  padding: clamp(12px, 3vw, 18px);
+  border: 4px solid rgba(17, 28, 61, 0.08);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(232, 247, 255, 0.94)),
+    linear-gradient(45deg, rgba(31, 141, 255, 0.1) 25%, transparent 25%) 0 0 / 28px 28px;
+}
+
+.parent-summary,
+.parent-stats {
+  display: grid;
+  gap: 12px;
+}
+
+.parent-summary {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+}
+
+.parent-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.parent-summary div,
+.parent-stats div {
+  display: grid;
+  min-height: 88px;
+  place-items: center;
+  padding: 12px;
+  border: 3px solid rgba(17, 28, 61, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 7px 0 rgba(16, 33, 74, 0.1);
+  text-align: center;
+}
+
+.parent-summary strong,
+.parent-stats strong {
+  color: var(--pink);
+  font-size: clamp(1.4rem, 4vw, 2.1rem);
+  line-height: 1;
+}
+
+.parent-actions-panel {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.parent-actions-panel button {
+  background: linear-gradient(180deg, #74e35d, var(--green));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--grass-dark);
+}
+
+.parent-actions-panel .danger-action {
+  background: linear-gradient(180deg, #ff80ad, var(--pink));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--pink-dark);
+}
+
+.memory-panel {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  min-height: 100%;
+  padding: clamp(12px, 3vw, 18px);
+  border: 4px solid rgba(17, 28, 61, 0.08);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 244, 204, 0.94)),
+    linear-gradient(45deg, rgba(255, 79, 139, 0.1) 25%, transparent 25%) 0 0 / 28px 28px;
+}
+
+.memory-status {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.memory-status div {
+  display: grid;
+  place-items: center;
+  min-height: 68px;
+  border: 3px solid rgba(255, 255, 255, 0.86);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 7px 0 rgba(16, 33, 74, 0.1);
+}
+
+.memory-status span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.memory-status strong {
+  color: var(--pink);
+  font-size: 1.8rem;
+  line-height: 0.92;
+}
+
 .memory-board {
   display: grid;
   gap: 12px;
@@ -813,6 +1172,8 @@ button {
 .memory-card {
   display: grid;
   min-height: clamp(82px, 18vw, 118px);
+  align-content: center;
+  gap: 6px;
   place-items: center;
   border: 4px solid #ffffff;
   border-radius: 12px;
@@ -831,6 +1192,31 @@ button {
   box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.48), 0 7px 0 var(--pink-dark);
 }
 
+.memory-card.open.blue {
+  background: linear-gradient(180deg, #73dcff, #1f8dff);
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.48), 0 7px 0 #0d55b2;
+}
+
+.memory-card.open.green {
+  background: linear-gradient(180deg, #74e35d, var(--green));
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.48), 0 7px 0 var(--grass-dark);
+}
+
+.memory-card.open.yellow {
+  background: linear-gradient(180deg, #ffe174, var(--yellow));
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.48), 0 7px 0 #df9b10;
+}
+
+.memory-card.open.purple {
+  background: linear-gradient(180deg, #b499ff, var(--purple));
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.48), 0 7px 0 #5c35c5;
+}
+
+.memory-card.open.matched {
+  outline: 4px solid rgba(255, 204, 36, 0.62);
+  transform: translateY(-2px);
+}
+
 .memory-card span {
   display: grid;
   width: 58px;
@@ -840,6 +1226,28 @@ button {
   background: rgba(255, 255, 255, 0.24);
   font-size: 2.1rem;
   font-weight: 1000;
+}
+
+.memory-card small {
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 1000;
+  line-height: 1;
+  opacity: 0.86;
+  text-transform: uppercase;
+}
+
+.memory-celebration {
+  justify-self: center;
+  padding: 10px 18px;
+  border: 4px solid white;
+  border-radius: 18px;
+  color: white;
+  background: linear-gradient(180deg, #ff80ad, var(--pink));
+  box-shadow: 0 8px 0 var(--pink-dark), 0 18px 30px rgba(16, 33, 74, 0.22);
+  font-size: clamp(1.35rem, 5vw, 2rem);
+  text-align: center;
+  text-shadow: 0 3px 0 rgba(16, 33, 74, 0.2);
 }
 
 .bubble-stage {
@@ -2103,7 +2511,7 @@ button.friend-thumb {
 
 @media (min-width: 1000px) {
   .nika-app {
-    width: min(1100px, 100%);
+    width: min(1180px, 100%);
   }
 
   .app-grid {
@@ -2114,12 +2522,31 @@ button.friend-thumb {
     grid-template-columns: minmax(280px, 0.88fr) minmax(360px, 1fr);
   }
 
+  .menu-dashboard {
+    grid-template-columns: minmax(0, 1fr) 330px;
+    align-items: start;
+  }
+
+  .home-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    align-items: stretch;
+  }
+
   .menu-card-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .menu-card {
-    min-height: 390px;
+    min-height: 270px;
+  }
+
+  .menu-card strong {
+    font-size: clamp(2rem, 4vw, 3.55rem);
+    max-width: 58%;
+  }
+
+  .menu-card small {
+    max-width: 62%;
   }
 
   .section-tabs {
@@ -2144,9 +2571,14 @@ button.friend-thumb {
   .hero-band .big-action,
   .game-head button,
   .sound-toggle,
+  .parent-toggle,
   .window-actions,
   .window-action,
   .window-close {
+    width: 100%;
+  }
+
+  .top-actions {
     width: 100%;
   }
 
@@ -2219,6 +2651,13 @@ button.friend-thumb {
     min-height: 70px;
   }
 
+  .progress-strip,
+  .parent-summary,
+  .parent-stats,
+  .parent-actions-panel {
+    grid-template-columns: 1fr;
+  }
+
   .menu-title {
     padding: 14px;
   }
@@ -2231,6 +2670,7 @@ button.friend-thumb {
 
   .menu-card strong {
     max-width: 68%;
+    font-size: clamp(2rem, 12vw, 3.35rem);
   }
 
   .menu-card::before {
@@ -2243,7 +2683,23 @@ button.friend-thumb {
     border-width: 4px;
   }
 
+  .menu-memory-preview {
+    width: 112px;
+    gap: 6px;
+  }
+
+  .menu-memory-preview span {
+    border-width: 3px;
+    border-radius: 11px;
+  }
+
   .sound-toggle {
+    width: 100%;
+  }
+
+  .parent-toggle,
+  .quest-action,
+  .spotlight-panel button {
     width: 100%;
   }
 
@@ -2251,13 +2707,15 @@ button.friend-thumb {
   .side-card,
   .game-card,
   .drawing-panel,
-  .roblox-panel {
+  .roblox-panel,
+  .parent-panel {
     border-width: 3px;
     border-radius: 22px;
   }
 
   .memory-board {
     gap: 9px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .memory-card {
