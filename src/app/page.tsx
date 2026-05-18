@@ -2,10 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type Section = "games" | "drawing" | "roblox";
-type GameWindowKind = "bubble" | "drawing" | null;
-type Card = { id: number; value: string; matched: boolean };
+type GameWindowKind = "bubble" | "drawing" | "roblox" | null;
 type BubbleColor = "pink" | "blue" | "green" | "yellow" | "purple";
+type FriendColor = "pink" | "blue" | "green" | "yellow" | "purple" | "orange";
+type GalleryFriend = { name: string; role: string; sheetIndex?: number; variant?: number; color: FriendColor };
+type SoundName = "tap" | "pop" | "match" | "open" | "reset" | "draw" | "cycle";
+type PlayerProgress = {
+  bubbleBest: number;
+  bubbleTotal: number;
+  drawingSessions: number;
+  friendViews: number;
+};
 type GameBubble = {
   id: number;
   color: BubbleColor;
@@ -27,10 +34,16 @@ type SplashParticle = {
   life: number;
 };
 
-const memorySymbols = ["gem", "star", "heart", "cube", "gem", "star", "heart", "cube"];
 const paintColors = ["#ff4f8b", "#31a8ff", "#6dde47", "#ffd336", "#8e5cff", "#202a44"];
 const bubbleColors: BubbleColor[] = ["pink", "blue", "green", "yellow", "purple"];
-const galleryFriends = [
+const progressKey = "nika-app-progress-v1";
+const defaultProgress: PlayerProgress = {
+  bubbleBest: 0,
+  bubbleTotal: 0,
+  drawingSessions: 0,
+  friendViews: 0
+};
+const galleryFriends: GalleryFriend[] = [
   { name: "Pink Explorer", role: "Crystal cave scout", sheetIndex: 0, color: "pink" },
   { name: "Blue Builder", role: "Tower maker", sheetIndex: 1, color: "blue" },
   { name: "Forest Scout", role: "Treehouse guide", sheetIndex: 2, color: "green" },
@@ -40,36 +53,47 @@ const galleryFriends = [
   { name: "Silver Knight", role: "Castle guard", sheetIndex: 6, color: "blue" },
   { name: "Red Captain", role: "Treasure finder", sheetIndex: 7, color: "pink" },
   { name: "Rainbow Painter", role: "Color creator", sheetIndex: 8, color: "purple" },
-  { name: "Star Skater", role: "Cloud ramp racer", color: "yellow" },
-  { name: "Candy Builder", role: "Sweet block designer", color: "pink" },
-  { name: "Aqua Runner", role: "Water park champion", color: "blue" },
-  { name: "Garden Mage", role: "Flower spell helper", color: "green" },
-  { name: "Pixel Princess", role: "Royal obby winner", color: "purple" },
-  { name: "Firework DJ", role: "Party stage friend", color: "orange" },
-  { name: "Cloud Pilot", role: "Sky island flyer", color: "blue" }
+  { name: "Star Skater", role: "Cloud ramp racer", variant: 0, color: "yellow" },
+  { name: "Candy Builder", role: "Sweet block designer", variant: 1, color: "pink" },
+  { name: "Aqua Diver", role: "Lagoon pearl finder", variant: 2, color: "blue" },
+  { name: "Garden Princess", role: "Flower castle keeper", variant: 3, color: "green" },
+  { name: "Pixel Princess", role: "Royal obby winner", variant: 4, color: "purple" },
+  { name: "Firework DJ", role: "Party stage friend", variant: 5, color: "orange" },
+  { name: "Cloud Pilot", role: "Sky island flyer", variant: 6, color: "blue" },
+  { name: "Glitter Guard", role: "Princess palace helper", variant: 7, color: "yellow" },
+  { name: "Neon Ninja", role: "Obstacle course jumper", variant: 8, color: "purple" },
+  { name: "Berry Chef", role: "Cupcake cafe maker", variant: 9, color: "pink" },
+  { name: "Ice Builder", role: "Snow castle designer", variant: 10, color: "blue" },
+  { name: "Jungle Dancer", role: "Leaf stage star", variant: 11, color: "green" },
+  { name: "Rocket Kid", role: "Moon block pilot", variant: 12, color: "orange" },
+  { name: "Diamond Diver", role: "Sparkle lagoon swimmer", variant: 13, color: "blue" },
+  { name: "Crown Crafter", role: "Royal outfit maker", variant: 14, color: "yellow" }
 ];
 
 export default function HomePage() {
   const [showSplash, setShowSplash] = useState(true);
-  const [section, setSection] = useState<Section>("games");
   const [activeWindow, setActiveWindow] = useState<GameWindowKind>(null);
-  const [cards, setCards] = useState<Card[]>(() => shuffleCards());
-  const [openCards, setOpenCards] = useState<number[]>([]);
-  const [moves, setMoves] = useState(0);
   const [poppedBubbles, setPoppedBubbles] = useState(0);
   const [bubbleResetKey, setBubbleResetKey] = useState(0);
+  const [progress, setProgress] = useState<PlayerProgress>(() => loadProgress());
+  const [soundOn, setSoundOn] = useState(true);
   const [paintColor, setPaintColor] = useState(paintColors[0]);
   const [brushSize, setBrushSize] = useState(8);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawingRef = useRef(false);
+  const audioRef = useRef<AudioContext | null>(null);
 
-  const matchedCount = cards.filter((card) => card.matched).length;
-  const allMatched = matchedCount === cards.length;
+  const bubbleLevel = Math.max(1, Math.floor(poppedBubbles / 15) + 1);
+  const bestLevel = Math.max(1, Math.floor(progress.bubbleBest / 15) + 1);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setShowSplash(false), 3000);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(progressKey, JSON.stringify(progress));
+  }, [progress]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,47 +124,119 @@ export default function HomePage() {
     };
   }, [activeWindow]);
 
-  useEffect(() => {
-    if (openCards.length !== 2) return;
-
-    const [firstId, secondId] = openCards;
-    const first = cards.find((card) => card.id === firstId);
-    const second = cards.find((card) => card.id === secondId);
-
-    if (!first || !second) return;
-
-    const timer = window.setTimeout(() => {
-      if (first.value === second.value) {
-        setCards((current) =>
-          current.map((card) =>
-            card.id === firstId || card.id === secondId ? { ...card, matched: true } : card
-          )
-        );
-      }
-      setOpenCards([]);
-    }, 650);
-
-    return () => window.clearTimeout(timer);
-  }, [cards, openCards]);
-
-  function flipCard(id: number) {
-    const card = cards.find((item) => item.id === id);
-    if (!card || card.matched || openCards.includes(id) || openCards.length === 2) return;
-
-    const next = [...openCards, id];
-    setOpenCards(next);
-    if (next.length === 2) setMoves((current) => current + 1);
-  }
-
-  function resetMemory() {
-    setCards(shuffleCards());
-    setOpenCards([]);
-    setMoves(0);
-  }
-
   function resetBubbles() {
+    playSound("reset");
     setPoppedBubbles(0);
     setBubbleResetKey((key) => key + 1);
+  }
+
+  function openWindow(windowName: Exclude<GameWindowKind, null>) {
+    playSound("open");
+    if (windowName === "drawing") {
+      setProgress((current) => ({ ...current, drawingSessions: current.drawingSessions + 1 }));
+    }
+    if (windowName === "roblox") {
+      setProgress((current) => ({ ...current, friendViews: current.friendViews + 1 }));
+    }
+    setActiveWindow(windowName);
+  }
+
+  function recordBubblePop() {
+    setPoppedBubbles((count) => {
+      const next = count + 1;
+      setProgress((current) => ({
+        ...current,
+        bubbleBest: Math.max(current.bubbleBest, next),
+        bubbleTotal: current.bubbleTotal + 1
+      }));
+      return next;
+    });
+  }
+
+  function recordFriendView() {
+    setProgress((current) => ({ ...current, friendViews: current.friendViews + 1 }));
+  }
+
+  function getAudioContext() {
+    if (audioRef.current) return audioRef.current;
+
+    const AudioCtor =
+      window.AudioContext ||
+      (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtor) return null;
+
+    audioRef.current = new AudioCtor();
+    return audioRef.current;
+  }
+
+  function playTone(
+    frequency: number,
+    duration = 0.12,
+    delay = 0,
+    type: OscillatorType = "sine",
+    volume = 0.08,
+    force = false
+  ) {
+    if (!soundOn && !force) return;
+
+    const context = getAudioContext();
+    if (!context) return;
+
+    const startAt = context.currentTime + delay;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, startAt);
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(startAt);
+    oscillator.stop(startAt + duration + 0.02);
+  }
+
+  function playSound(sound: SoundName, force = false) {
+    if (!soundOn && !force) return;
+
+    if (sound === "pop") {
+      playTone(740, 0.07, 0, "triangle", 0.12, force);
+      playTone(1180, 0.11, 0.035, "sine", 0.08, force);
+      return;
+    }
+
+    if (sound === "match") {
+      playTone(523, 0.1, 0, "sine", 0.08, force);
+      playTone(659, 0.1, 0.08, "sine", 0.08, force);
+      playTone(784, 0.14, 0.16, "sine", 0.08, force);
+      return;
+    }
+
+    if (sound === "open") {
+      playTone(392, 0.08, 0, "triangle", 0.07, force);
+      playTone(784, 0.14, 0.08, "triangle", 0.08, force);
+      return;
+    }
+
+    if (sound === "reset") {
+      playTone(440, 0.08, 0, "square", 0.04, force);
+      playTone(330, 0.11, 0.07, "square", 0.04, force);
+      return;
+    }
+
+    if (sound === "cycle") {
+      playTone(620, 0.08, 0, "triangle", 0.06, force);
+      playTone(820, 0.08, 0.055, "triangle", 0.05, force);
+      return;
+    }
+
+    if (sound === "draw") {
+      playTone(520, 0.045, 0, "sine", 0.035, force);
+      return;
+    }
+
+    playTone(520, 0.06, 0, "triangle", 0.06, force);
   }
 
   function canvasPoint(event: React.PointerEvent<HTMLCanvasElement>) {
@@ -191,11 +287,11 @@ export default function HomePage() {
   }
 
   const rewardText = useMemo(() => {
-    if (allMatched && poppedBubbles >= 20) return "Super builder";
-    if (allMatched) return "Memory master";
-    if (poppedBubbles >= 20) return "Bubble hero";
+    if (progress.bubbleBest >= 45) return "Bubble champion";
+    if (progress.friendViews >= 24) return "Friend expert";
+    if (progress.drawingSessions >= 5) return "Art princess";
     return "Ready to play";
-  }, [allMatched, poppedBubbles]);
+  }, [progress]);
 
   return (
     <main className="nika-app">
@@ -223,143 +319,70 @@ export default function HomePage() {
           <span className="brand-avatar" aria-hidden="true" />
           <span>Nika&apos;s App</span>
         </a>
-        <nav className="section-tabs" aria-label="App sections">
-          {(["games", "drawing", "roblox"] as Section[]).map((item) => (
-            <button
-              className={
-                (item === "drawing" ? activeWindow === "drawing" : section === item && !activeWindow)
-                  ? "tab active"
-                  : "tab"
-              }
-              key={item}
-              onClick={() => {
-                if (item === "drawing") {
-                  setActiveWindow("drawing");
-                  return;
-                }
-                setActiveWindow(null);
-                setSection(item);
-              }}
-              type="button"
-            >
-              {item === "games" ? "Games" : item === "drawing" ? "Drawing" : "Roblox"}
-            </button>
-          ))}
-        </nav>
         <div className="score-card" aria-label={`Nika status: ${rewardText}`}>
-          <strong>{matchedCount / 2 + poppedBubbles}</strong>
+          <strong>{progress.bubbleBest + progress.drawingSessions + progress.friendViews}</strong>
           <span>{rewardText}</span>
         </div>
+        <button
+          className={soundOn ? "sound-toggle active" : "sound-toggle"}
+          type="button"
+          onClick={() => {
+            const nextSound = !soundOn;
+            setSoundOn(nextSound);
+            if (nextSound) playSound("open", true);
+          }}
+          aria-label={soundOn ? "Turn sounds off" : "Turn sounds on"}
+        >
+          {soundOn ? "Sound On" : "Sound Off"}
+        </button>
       </header>
 
-      <section className="hero-band" id="top">
-        <div>
-          <h1>Play in Nika&apos;s block world.</h1>
-          <p>
-            Memory Match, Bubble Pop, a bright drawing pad, and original blocky friends to view.
-          </p>
+      <section className="main-menu" id="top" aria-label="Choose an activity">
+        <div className="menu-title">
+          <span>Princess Nika</span>
+          <h1>Choose your play room.</h1>
         </div>
-        <button className="big-action" type="button" onClick={() => setSection("games")}>
-          Start playing
-        </button>
+
+        <div className="menu-card-grid">
+          <button className="menu-card bubble-menu" type="button" onClick={() => openWindow("bubble")}>
+            <span className="menu-icon" aria-hidden="true">B</span>
+            <strong>Bubble Pop</strong>
+            <small>Level {bubbleLevel} now | Best {progress.bubbleBest}</small>
+            <span className="menu-meter" aria-hidden="true">
+              <span style={{ width: `${Math.min((poppedBubbles % 15) * 6.67, 100)}%` }} />
+            </span>
+          </button>
+
+          <button className="menu-card drawing-menu" type="button" onClick={() => openWindow("drawing")}>
+            <span className="menu-icon" aria-hidden="true">D</span>
+            <strong>Drawing Pad</strong>
+            <small>{progress.drawingSessions} art sessions</small>
+            <span className="menu-sparkles" aria-hidden="true" />
+          </button>
+
+          <button className="menu-card friends-menu" type="button" onClick={() => openWindow("roblox")}>
+            <span
+              className="menu-friend-preview"
+              style={friendImageStyle(galleryFriends[12])}
+              aria-hidden="true"
+            />
+            <strong>Blocky Friends</strong>
+            <small>{galleryFriends.length} friends | {progress.friendViews} views</small>
+          </button>
+        </div>
       </section>
-
-      <div className="app-grid">
-        <section className="main-panel" aria-live="polite">
-          {section === "games" && (
-            <div className="games-layout">
-              <GameShell
-                title="Memory Match"
-                detail={`${moves} moves${allMatched ? " - all matched" : ""}`}
-                action="Shuffle"
-                onAction={resetMemory}
-              >
-                <div className="memory-board">
-                  {cards.map((card) => {
-                    const visible = card.matched || openCards.includes(card.id);
-                    return (
-                      <button
-                        className={visible ? "memory-card open" : "memory-card"}
-                        key={card.id}
-                        onClick={() => flipCard(card.id)}
-                        type="button"
-                        aria-label={visible ? `${card.value} card` : "Hidden card"}
-                      >
-                        <span>{visible ? cardSymbol(card.value) : "?"}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </GameShell>
-
-              <article className="game-card play-launch-panel">
-                <div className="game-head">
-                  <div>
-                    <h2>Play Rooms</h2>
-                    <p>Open each game in a bigger mobile-friendly window.</p>
-                  </div>
-                </div>
-                <div className="launch-grid">
-                  <button className="launch-card bubble-launch" type="button" onClick={() => setActiveWindow("bubble")}>
-                    <span className="launch-icon" aria-hidden="true">B</span>
-                    <strong>Bubble Pop</strong>
-                    <small>{poppedBubbles} popped</small>
-                  </button>
-                  <button className="launch-card draw-launch" type="button" onClick={() => setActiveWindow("drawing")}>
-                    <span className="launch-icon" aria-hidden="true">D</span>
-                    <strong>Drawing Pad</strong>
-                    <small>Paint a block world</small>
-                  </button>
-                </div>
-              </article>
-            </div>
-          )}
-
-          {section === "drawing" && null}
-
-          {section === "roblox" && <RobloxGallery />}
-        </section>
-
-        <aside className="side-panel">
-          <div className="side-card gallery-preview">
-            <div className="panel-title">
-              <span>Roblox</span>
-              <h2>Blocky Friends</h2>
-            </div>
-            <div className="friend-grid small">
-              {galleryFriends.slice(0, 6).map((friend, index) => (
-                <button
-                  className={`friend-thumb ${friend.color}`}
-                  key={friend.name}
-                  onClick={() => setSection("roblox")}
-                  style={friend.sheetIndex === undefined ? undefined : friendTileStyle(friend.sheetIndex)}
-                  type="button"
-                  aria-label={`View ${friend.name}`}
-                />
-              ))}
-            </div>
-            <button className="wide-button" type="button" onClick={() => setSection("roblox")}>
-              View all friends
-            </button>
-          </div>
-
-          <div className="side-card safety-card">
-            <span className="cube-stack" aria-hidden="true" />
-            <h2>Princess Nika</h2>
-          </div>
-        </aside>
-      </div>
 
       {activeWindow === "bubble" && (
         <GameWindow
-          title="Bubble Pop"
-          detail={`${poppedBubbles} bubbles popped`}
+            title="Bubble Pop"
+          detail={`Level ${bubbleLevel} | ${poppedBubbles} popped | best ${progress.bubbleBest}`}
           action="Reset"
           onAction={resetBubbles}
           onClose={() => setActiveWindow(null)}
         >
           <BubblePopGame
-            onPop={() => setPoppedBubbles((count) => count + 1)}
+            onPop={recordBubblePop}
+            onSound={playSound}
             popped={poppedBubbles}
             resetKey={bubbleResetKey}
           />
@@ -375,10 +398,21 @@ export default function HomePage() {
             paintColor={paintColor}
             setBrushSize={setBrushSize}
             setPaintColor={setPaintColor}
+            onSound={playSound}
             startDrawing={startDrawing}
             stopDrawing={stopDrawing}
             canvasRef={canvasRef}
           />
+        </GameWindow>
+      )}
+
+      {activeWindow === "roblox" && (
+        <GameWindow
+          title="Blocky Friends"
+          detail={`${galleryFriends.length} original friends to view`}
+          onClose={() => setActiveWindow(null)}
+        >
+          <RobloxGallery windowed onFriendView={recordFriendView} onSound={playSound} />
         </GameWindow>
       )}
     </main>
@@ -457,10 +491,12 @@ function GameWindow({
 
 function BubblePopGame({
   onPop,
+  onSound,
   popped,
   resetKey
 }: {
   onPop: () => void;
+  onSound?: (sound: SoundName) => void;
   popped: number;
   resetKey: number;
 }) {
@@ -515,6 +551,7 @@ function BubblePopGame({
   }, []);
 
   function startGame() {
+    onSound?.("open");
     bubblesRef.current = [];
     particlesRef.current = [];
     spawnTimerRef.current = 0;
@@ -649,6 +686,7 @@ function BubblePopGame({
 
     const [bubble] = bubblesRef.current.splice(hitIndex, 1);
     particlesRef.current.push(...createSplash(bubble));
+    onSound?.("pop");
     onPop();
     setCombo((current) => {
       const next = current + 1;
@@ -701,6 +739,7 @@ function DrawingPanel({
   canvasRef,
   clearCanvas,
   draw,
+  onSound,
   paintColor,
   setBrushSize,
   setPaintColor,
@@ -711,6 +750,7 @@ function DrawingPanel({
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   clearCanvas: () => void;
   draw: (event: React.PointerEvent<HTMLCanvasElement>) => void;
+  onSound?: (sound: SoundName) => void;
   paintColor: string;
   setBrushSize: (size: number) => void;
   setPaintColor: (color: string) => void;
@@ -737,7 +777,10 @@ function DrawingPanel({
           <h2>Drawing Pad</h2>
           <p>Draw a castle, a pet, or a colorful block world.</p>
         </div>
-        <button type="button" onClick={clearCanvas}>
+        <button type="button" onClick={() => {
+          onSound?.("reset");
+          clearCanvas();
+        }}>
           Clear
         </button>
       </div>
@@ -750,7 +793,10 @@ function DrawingPanel({
                 aria-label={`Use ${color}`}
                 className={paintColor === color ? "swatch active" : "swatch"}
                 key={color}
-                onClick={() => setPaintColor(color)}
+                onClick={() => {
+                  onSound?.("tap");
+                  setPaintColor(color);
+                }}
                 style={{ background: color }}
                 type="button"
               />
@@ -771,7 +817,10 @@ function DrawingPanel({
           className="drawing-canvas"
           height={560}
           onPointerCancel={stopDrawing}
-          onPointerDown={startDrawing}
+          onPointerDown={(event) => {
+            onSound?.("draw");
+            startDrawing(event);
+          }}
           onPointerLeave={stopDrawing}
           onPointerMove={draw}
           onPointerUp={stopDrawing}
@@ -783,31 +832,43 @@ function DrawingPanel({
   );
 }
 
-function RobloxGallery() {
+function RobloxGallery({
+  onFriendView,
+  onSound,
+  windowed = false
+}: {
+  onFriendView?: () => void;
+  onSound?: (sound: SoundName) => void;
+  windowed?: boolean;
+}) {
   const [selected, setSelected] = useState(0);
   const activeFriend = galleryFriends[selected];
 
   function move(direction: -1 | 1) {
+    onSound?.("cycle");
+    onFriendView?.();
     setSelected((current) => (current + direction + galleryFriends.length) % galleryFriends.length);
   }
 
   return (
-    <article className="roblox-panel">
-      <div className="game-head">
-        <div>
-          <h2>Roblox</h2>
-          <p>Swipe or tap through original blocky friends. No official characters or logos.</p>
+    <article className={windowed ? "roblox-panel windowed-gallery" : "roblox-panel"}>
+      {!windowed && (
+        <div className="game-head">
+          <div>
+            <h2>Roblox</h2>
+            <p>Swipe or tap through original blocky friends. No official characters or logos.</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="character-viewer" aria-live="polite">
         <button className="viewer-arrow" onClick={() => move(-1)} type="button" aria-label="Previous character">
-          Back
+          Prev
         </button>
-        <div className={`viewer-card ${activeFriend.color}`}>
+        <div className={`viewer-card animated ${activeFriend.color}`} key={activeFriend.name}>
           <div
-            className={`viewer-portrait ${activeFriend.color}`}
-            style={activeFriend.sheetIndex === undefined ? undefined : friendTileStyle(activeFriend.sheetIndex)}
+            className={friendAvatarClass("viewer-portrait animated", activeFriend)}
+            style={friendImageStyle(activeFriend)}
             aria-hidden="true"
           />
           <div className="viewer-copy">
@@ -826,13 +887,17 @@ function RobloxGallery() {
           <button
             className={selected === index ? `rail-card active ${friend.color}` : `rail-card ${friend.color}`}
             key={friend.name}
-            onClick={() => setSelected(index)}
+            onClick={() => {
+              onSound?.("cycle");
+              onFriendView?.();
+              setSelected(index);
+            }}
             type="button"
             aria-label={`Open ${friend.name}`}
           >
             <span
-              className={`friend-thumb ${friend.color}`}
-              style={friend.sheetIndex === undefined ? undefined : friendTileStyle(friend.sheetIndex)}
+              className={friendAvatarClass("friend-thumb", friend)}
+              style={friendImageStyle(friend)}
               aria-hidden="true"
             />
             <strong>{friend.name}</strong>
@@ -842,35 +907,29 @@ function RobloxGallery() {
 
       <div className="friend-grid">
         {galleryFriends.map((friend, index) => (
-          <div className={`friend-tile ${friend.color}`} key={friend.name}>
+          <button
+            className={selected === index ? `friend-tile selected ${friend.color}` : `friend-tile ${friend.color}`}
+            key={friend.name}
+            onClick={() => {
+              onSound?.("cycle");
+              onFriendView?.();
+              setSelected(index);
+            }}
+            type="button"
+            aria-label={`View ${friend.name}`}
+          >
             <span
-              className={`friend-thumb ${friend.color}`}
-              style={friend.sheetIndex === undefined ? undefined : friendTileStyle(friend.sheetIndex)}
+              className={friendAvatarClass("friend-thumb", friend)}
+              style={friendImageStyle(friend)}
               aria-hidden="true"
             />
             <strong>{friend.name}</strong>
             <small>{friend.role}</small>
-          </div>
+          </button>
         ))}
       </div>
     </article>
   );
-}
-
-function shuffleCards() {
-  return memorySymbols
-    .map((value, id) => ({ id, value, matched: false }))
-    .sort(() => Math.random() - 0.5);
-}
-
-function cardSymbol(value: string) {
-  const symbols: Record<string, string> = {
-    cube: "C",
-    gem: "G",
-    heart: "H",
-    star: "S"
-  };
-  return symbols[value];
 }
 
 function randomBubbleColor(): BubbleColor {
@@ -987,11 +1046,51 @@ function bubblePalette(color: BubbleColor) {
   return palettes[color];
 }
 
+function friendAvatarClass(baseClass: string, friend: GalleryFriend) {
+  const generatedClass = friend.sheetIndex === undefined && friend.variant === undefined ? " generated variant-0" : "";
+  return `${baseClass} ${friend.color}${generatedClass}`;
+}
+
+function loadProgress(): PlayerProgress {
+  if (typeof window === "undefined") return defaultProgress;
+
+  try {
+    const stored = window.localStorage.getItem(progressKey);
+    if (!stored) return defaultProgress;
+    const parsed = JSON.parse(stored) as Partial<PlayerProgress>;
+    return {
+      bubbleBest: Number(parsed.bubbleBest) || 0,
+      bubbleTotal: Number(parsed.bubbleTotal) || 0,
+      drawingSessions: Number(parsed.drawingSessions) || 0,
+      friendViews: Number(parsed.friendViews) || 0
+    };
+  } catch {
+    return defaultProgress;
+  }
+}
+
+function friendImageStyle(friend: GalleryFriend) {
+  if (friend.sheetIndex !== undefined) return friendTileStyle(friend.sheetIndex);
+  if (friend.variant !== undefined) return extraFriendTileStyle(friend.variant);
+  return undefined;
+}
+
 function friendTileStyle(index: number) {
   const col = index % 3;
   const row = Math.floor(index / 3);
   return {
     backgroundImage: "url('/assets/blocky-friends-gallery.png')",
-    backgroundPosition: `${col * 50}% ${row * 50}%`
+    backgroundPosition: `${col * 50}% ${row * 50}%`,
+    backgroundSize: "300% 300%"
+  };
+}
+
+function extraFriendTileStyle(index: number) {
+  const col = index % 5;
+  const row = Math.floor(index / 5);
+  return {
+    backgroundImage: "url('/assets/blocky-friends-extra.png')",
+    backgroundPosition: `${col * 25}% ${row * 50}%`,
+    backgroundSize: "500% 300%"
   };
 }

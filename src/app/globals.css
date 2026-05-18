@@ -269,7 +269,8 @@ button {
 .tab,
 .big-action,
 .wide-button,
-.game-head button {
+.game-head button,
+.sound-toggle {
   min-height: 54px;
   border: 4px solid rgba(255, 255, 255, 0.86);
   border-radius: 12px;
@@ -294,8 +295,21 @@ button {
 .tab:hover,
 .big-action:hover,
 .wide-button:hover,
-.game-head button:hover {
+.game-head button:hover,
+.sound-toggle:hover {
   transform: translateY(-2px);
+}
+
+.sound-toggle {
+  padding: 0 16px;
+  background: linear-gradient(180deg, #ffd84d, var(--orange));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 #c35f00;
+  font-size: 0.95rem;
+}
+
+.sound-toggle.active {
+  background: linear-gradient(180deg, #74e35d, var(--green));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--grass-dark);
 }
 
 .score-card {
@@ -352,6 +366,186 @@ button {
   background: linear-gradient(180deg, #74e35d, var(--green));
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--grass-dark);
   font-size: 1.1rem;
+}
+
+.main-menu {
+  display: grid;
+  gap: 18px;
+}
+
+.menu-title {
+  padding: clamp(16px, 4vw, 24px);
+  border: 4px solid rgba(255, 255, 255, 0.86);
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(222, 245, 255, 0.9)),
+    linear-gradient(45deg, rgba(0, 119, 255, 0.14) 25%, transparent 25%) 0 0 / 34px 34px,
+    linear-gradient(-45deg, rgba(53, 195, 68, 0.12) 25%, transparent 25%) 0 0 / 34px 34px;
+  box-shadow: var(--shadow);
+}
+
+.menu-title span {
+  display: inline-flex;
+  margin-bottom: 8px;
+  padding: 7px 12px;
+  border: 3px solid white;
+  border-radius: 10px;
+  color: white;
+  background: linear-gradient(180deg, #ff80ad, var(--pink));
+  box-shadow: 0 5px 0 var(--pink-dark);
+  font-size: 0.78rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.menu-title h1 {
+  max-width: 760px;
+  margin: 0;
+  font-size: clamp(2.35rem, 9vw, 5.3rem);
+  line-height: 0.88;
+  text-transform: uppercase;
+  text-shadow: 0 5px 0 rgba(17, 28, 61, 0.14);
+}
+
+.menu-card-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1fr;
+}
+
+.menu-card {
+  position: relative;
+  display: grid;
+  min-height: clamp(230px, 48vw, 350px);
+  align-content: end;
+  justify-items: start;
+  gap: 10px;
+  overflow: hidden;
+  padding: clamp(16px, 4vw, 24px);
+  border: 5px solid #ffffff;
+  border-radius: 24px;
+  color: white;
+  text-align: left;
+  box-shadow: inset 0 6px 0 rgba(255, 255, 255, 0.34), 0 12px 0 rgba(17, 28, 61, 0.16), 0 26px 42px rgba(5, 61, 126, 0.22);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.menu-card:hover {
+  transform: translateY(-4px);
+  box-shadow: inset 0 6px 0 rgba(255, 255, 255, 0.34), 0 16px 0 rgba(17, 28, 61, 0.16), 0 30px 46px rgba(5, 61, 126, 0.24);
+}
+
+.menu-card::before {
+  content: "";
+  position: absolute;
+  inset: 16px 16px auto auto;
+  width: clamp(100px, 28vw, 178px);
+  aspect-ratio: 1;
+  border: 5px solid rgba(255, 255, 255, 0.62);
+  border-radius: 20px;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.22) 25%, transparent 25%) 0 0 / 22px 22px,
+    rgba(255, 255, 255, 0.18);
+  transform: rotate(5deg);
+}
+
+.menu-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 66px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 4px solid white;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.24);
+  font-size: 2.25rem;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 4px 0 rgba(17, 28, 61, 0.2);
+}
+
+.menu-card strong {
+  position: relative;
+  z-index: 1;
+  max-width: 78%;
+  font-size: clamp(2.35rem, 9vw, 4.45rem);
+  line-height: 0.86;
+  text-shadow: 0 6px 0 rgba(17, 28, 61, 0.22);
+}
+
+.menu-card small {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(1rem, 3.6vw, 1.25rem);
+  font-weight: 1000;
+  text-shadow: 0 3px 0 rgba(17, 28, 61, 0.14);
+}
+
+.bubble-menu {
+  background:
+    radial-gradient(circle at 82% 20%, rgba(255, 255, 255, 0.92) 0 22px, transparent 23px),
+    radial-gradient(circle at 70% 40%, rgba(188, 245, 255, 0.72) 0 44px, transparent 45px),
+    linear-gradient(180deg, #73dcff, #1f8dff);
+}
+
+.drawing-menu {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 211, 54, 0.9) 0 22px, transparent 23px),
+    linear-gradient(130deg, rgba(255, 255, 255, 0.28) 0 18%, transparent 19%),
+    linear-gradient(180deg, #ff80ad, #8e5cff);
+}
+
+.friends-menu {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 44%),
+    linear-gradient(180deg, #ffd84d, #35c344);
+}
+
+.menu-meter {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(260px, 88%);
+  height: 18px;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.menu-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--yellow), #ffffff);
+}
+
+.menu-sparkles {
+  position: absolute;
+  right: 28px;
+  top: 28px;
+  width: 150px;
+  aspect-ratio: 1;
+  background:
+    radial-gradient(circle at 18% 30%, #ffffff 0 9px, transparent 10px),
+    radial-gradient(circle at 68% 18%, #ffd336 0 13px, transparent 14px),
+    radial-gradient(circle at 74% 70%, #ffffff 0 10px, transparent 11px),
+    radial-gradient(circle at 35% 76%, #ffcc24 0 8px, transparent 9px);
+  animation: float 2.2s ease-in-out infinite;
+}
+
+.menu-friend-preview {
+  position: absolute;
+  right: 18px;
+  top: 16px;
+  width: clamp(120px, 32vw, 210px);
+  aspect-ratio: 1;
+  border: 5px solid rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  background-repeat: no-repeat;
+  box-shadow: 0 10px 0 rgba(17, 28, 61, 0.16), 0 22px 34px rgba(17, 28, 61, 0.16);
+  animation: friendWave 1.9s ease-in-out infinite;
 }
 
 .app-grid {
@@ -1155,6 +1349,14 @@ button {
   gap: 18px;
 }
 
+.windowed-gallery {
+  min-height: 100%;
+}
+
+.windowed-gallery .character-viewer {
+  min-height: min(66vh, 720px);
+}
+
 .character-viewer {
   position: relative;
   display: grid;
@@ -1196,6 +1398,10 @@ button {
     linear-gradient(45deg, rgba(255, 255, 255, 0.18) 25%, transparent 25%) 0 0 / 34px 34px,
     linear-gradient(180deg, #7edcff, #35c344);
   box-shadow: 0 10px 0 rgba(17, 28, 61, 0.16), 0 24px 34px rgba(17, 28, 61, 0.18);
+}
+
+.viewer-card.animated {
+  animation: friendCardArrive 360ms ease both;
 }
 
 .viewer-card::before,
@@ -1263,6 +1469,10 @@ button {
     inset 0 4px 0 rgba(255, 255, 255, 0.48),
     0 9px 0 rgba(17, 28, 61, 0.13),
     0 22px 32px rgba(17, 28, 61, 0.14);
+}
+
+.viewer-portrait.animated {
+  animation: friendWave 1.75s ease-in-out infinite;
 }
 
 .viewer-copy {
@@ -1396,23 +1606,127 @@ button {
   background-color: #ffb15b;
 }
 
-.friend-thumb:not([style])::before,
-.viewer-portrait:not([style])::before {
+.friend-thumb.generated,
+.viewer-portrait.generated {
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.5) 0 14%, transparent 15%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(17, 28, 61, 0.1)),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.16) 25%, transparent 25%) 0 0 / 20px 20px;
+}
+
+.friend-thumb.generated::before,
+.viewer-portrait.generated::before {
   content: "";
   position: absolute;
-  inset: 16% 21% 22%;
+  inset: 10% 21% 22%;
   border: 4px solid rgba(255, 255, 255, 0.82);
-  border-radius: 12px 12px 10px 10px;
+  border-radius: 14px 14px 10px 10px;
   background:
-    radial-gradient(circle at 38% 36%, var(--ink) 0 5%, transparent 6%),
-    radial-gradient(circle at 62% 36%, var(--ink) 0 5%, transparent 6%),
-    linear-gradient(var(--ink), var(--ink)) 43% 58% / 14% 5% no-repeat,
-    linear-gradient(90deg, #7a4b2e 0 24%, #ffd3b1 25% 75%, #7a4b2e 76%),
+    radial-gradient(circle at 37% 27%, var(--ink) 0 4.5%, transparent 5.5%),
+    radial-gradient(circle at 63% 27%, var(--ink) 0 4.5%, transparent 5.5%),
+    linear-gradient(var(--ink), var(--ink)) 42% 43% / 16% 4% no-repeat,
+    linear-gradient(90deg, var(--hair, #7a4b2e) 0 20%, #ffd3b1 21% 79%, var(--hair, #7a4b2e) 80%),
+    linear-gradient(var(--shirt, #ff74a8), var(--shirt-dark, #d93672)) 20% 62% / 60% 34% no-repeat,
+    linear-gradient(90deg, var(--pants, #3f79d3) 0 46%, #ffffff 47% 53%, var(--pants, #3f79d3) 54%) 26% 92% / 48% 18% no-repeat,
     linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(17, 28, 61, 0.12));
   box-shadow:
-    -22px 42px 0 -8px rgba(255, 255, 255, 0.65),
-    22px 42px 0 -8px rgba(255, 255, 255, 0.65),
+    -28px 54px 0 -11px var(--sleeve, rgba(255, 255, 255, 0.72)),
+    28px 54px 0 -11px var(--sleeve, rgba(255, 255, 255, 0.72)),
     0 58px 0 -10px rgba(17, 28, 61, 0.2);
+}
+
+.friend-thumb.generated::after,
+.viewer-portrait.generated::after {
+  content: "";
+  position: absolute;
+  inset: auto 25% 13% 25%;
+  height: 16%;
+  border: 4px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at var(--badge-x, 28%) 48%, var(--badge, #ffd336) 0 12%, transparent 13%),
+    linear-gradient(90deg, var(--shoe, #111c3d) 0 42%, transparent 43% 57%, var(--shoe, #111c3d) 58%);
+  box-shadow: 0 7px 0 rgba(17, 28, 61, 0.14);
+}
+
+.viewer-portrait.generated::before {
+  inset: 9% 22% 20%;
+  border-width: 6px;
+}
+
+.viewer-portrait.generated::after {
+  border-width: 5px;
+}
+
+.generated.variant-0,
+.generated.variant-7,
+.generated.variant-14 {
+  --hair: #8a5a24;
+  --shirt: #ffd84d;
+  --shirt-dark: #efab16;
+  --pants: #ffffff;
+  --sleeve: #ffcc24;
+  --badge: #ff4f8b;
+}
+
+.generated.variant-1,
+.generated.variant-9 {
+  --hair: #5b3424;
+  --shirt: #ff7fba;
+  --shirt-dark: #d93672;
+  --pants: #7b46ff;
+  --sleeve: #ffb4d2;
+  --badge: #ffffff;
+}
+
+.generated.variant-2,
+.generated.variant-6,
+.generated.variant-13 {
+  --hair: #243c7a;
+  --shirt: #31a8ff;
+  --shirt-dark: #0d61c7;
+  --pants: #ffffff;
+  --sleeve: #bdeeff;
+  --badge: #42d73f;
+}
+
+.generated.variant-3,
+.generated.variant-11 {
+  --hair: #4a7b2c;
+  --shirt: #6dde47;
+  --shirt-dark: #229b36;
+  --pants: #ffcc24;
+  --sleeve: #c8ffbf;
+  --badge: #ff4f8b;
+}
+
+.generated.variant-4,
+.generated.variant-8 {
+  --hair: #5c35c5;
+  --shirt: #9e7cff;
+  --shirt-dark: #6233c7;
+  --pants: #202a44;
+  --sleeve: #dfc9ff;
+  --badge: #ffd336;
+}
+
+.generated.variant-5,
+.generated.variant-12 {
+  --hair: #7a3f1a;
+  --shirt: #ff9f45;
+  --shirt-dark: #c35f00;
+  --pants: #0077ff;
+  --sleeve: #ffd3a1;
+  --badge: #ffffff;
+}
+
+.generated.variant-10 {
+  --hair: #6b798e;
+  --shirt: #bdeeff;
+  --shirt-dark: #31a8ff;
+  --pants: #ffffff;
+  --sleeve: #e6fbff;
+  --badge: #7b46ff;
 }
 
 button.friend-thumb {
@@ -1428,6 +1742,21 @@ button.friend-thumb {
   border: 3px solid #d4efff;
   border-radius: 12px;
   background: white;
+  color: var(--ink);
+  text-align: left;
+  box-shadow: 0 6px 0 rgba(17, 28, 61, 0.08);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.friend-tile:hover,
+.friend-tile.selected {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 0 rgba(17, 28, 61, 0.12);
+}
+
+.friend-tile.selected {
+  border-color: var(--yellow);
+  outline: 3px solid rgba(255, 204, 36, 0.45);
 }
 
 .friend-tile .friend-thumb {
@@ -1572,6 +1901,33 @@ button.friend-thumb {
 
   50% {
     transform: translateY(-7px) rotate(-3deg) scale(1.06);
+  }
+}
+
+@keyframes friendCardArrive {
+  0% {
+    opacity: 0;
+    transform: translateX(18px) scale(0.96);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes friendWave {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+
+  35% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+
+  68% {
+    transform: translateY(2px) rotate(-2deg);
   }
 }
 
@@ -1758,6 +2114,14 @@ button.friend-thumb {
     grid-template-columns: minmax(280px, 0.88fr) minmax(360px, 1fr);
   }
 
+  .menu-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .menu-card {
+    min-height: 390px;
+  }
+
   .section-tabs {
     order: initial;
     width: auto;
@@ -1779,6 +2143,7 @@ button.friend-thumb {
 
   .hero-band .big-action,
   .game-head button,
+  .sound-toggle,
   .window-actions,
   .window-action,
   .window-close {
@@ -1787,6 +2152,10 @@ button.friend-thumb {
 
   .launch-grid {
     grid-template-columns: 1fr;
+  }
+
+  .menu-card strong {
+    max-width: 74%;
   }
 
   .side-panel {
@@ -1848,6 +2217,34 @@ button.friend-thumb {
   .score-card {
     width: 100%;
     min-height: 70px;
+  }
+
+  .menu-title {
+    padding: 14px;
+  }
+
+  .menu-card {
+    min-height: 215px;
+    border-width: 4px;
+    border-radius: 20px;
+  }
+
+  .menu-card strong {
+    max-width: 68%;
+  }
+
+  .menu-card::before {
+    width: 102px;
+    border-width: 4px;
+  }
+
+  .menu-friend-preview {
+    width: 118px;
+    border-width: 4px;
+  }
+
+  .sound-toggle {
+    width: 100%;
   }
 
   .main-panel,
@@ -1912,6 +2309,10 @@ button.friend-thumb {
 
   .game-window .drawing-canvas {
     min-height: calc(100dvh - 310px);
+  }
+
+  .windowed-gallery .character-viewer {
+    min-height: auto;
   }
 
   .launch-card {
