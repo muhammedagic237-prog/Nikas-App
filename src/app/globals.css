@@ -279,10 +279,10 @@ button {
 .wide-button,
 .game-head button,
 .sound-toggle,
-.parent-toggle,
+.cartoon-toggle,
 .quest-action,
 .spotlight-panel button,
-.parent-actions-panel button {
+.cartoon-form button {
   min-height: 54px;
   border: 4px solid rgba(255, 255, 255, 0.86);
   border-radius: 12px;
@@ -309,10 +309,10 @@ button {
 .wide-button:hover,
 .game-head button:hover,
 .sound-toggle:hover,
-.parent-toggle:hover,
+.cartoon-toggle:hover,
 .quest-action:hover,
 .spotlight-panel button:hover,
-.parent-actions-panel button:hover {
+.cartoon-form button:hover {
   transform: translateY(-2px);
 }
 
@@ -328,10 +328,10 @@ button {
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--grass-dark);
 }
 
-.parent-toggle {
+.cartoon-toggle {
   padding: 0 16px;
-  background: linear-gradient(180deg, #9e7cff, var(--purple));
-  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 #5c35c5;
+  background: linear-gradient(180deg, #ff80ad, var(--pink));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--pink-dark);
   font-size: 0.95rem;
 }
 
@@ -471,8 +471,11 @@ button {
 .quest-item small,
 .spotlight-panel span,
 .spotlight-panel small,
-.parent-summary span,
-.parent-stats span {
+.cartoon-library-head span,
+.cartoon-form span,
+.cartoon-list-item span,
+.cartoon-player-meta span,
+.cartoon-list-empty span {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 1000;
@@ -1059,66 +1062,232 @@ button {
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 #5c35c5;
 }
 
-.parent-panel {
+.cartoon-panel {
   display: grid;
   gap: 18px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
   min-height: 100%;
   padding: clamp(12px, 3vw, 18px);
   border: 4px solid rgba(17, 28, 61, 0.08);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(232, 247, 255, 0.94)),
+    radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.78) 0 38px, transparent 39px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(232, 247, 255, 0.94)),
     linear-gradient(45deg, rgba(31, 141, 255, 0.1) 25%, transparent 25%) 0 0 / 28px 28px;
 }
 
-.parent-summary,
-.parent-stats {
+.cartoon-player-card,
+.cartoon-library-card {
   display: grid;
-  gap: 12px;
-}
-
-.parent-summary {
-  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
-}
-
-.parent-stats {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.parent-summary div,
-.parent-stats div {
-  display: grid;
-  min-height: 88px;
-  place-items: center;
-  padding: 12px;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding: clamp(12px, 3vw, 18px);
   border: 3px solid rgba(17, 28, 61, 0.08);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.78);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 7px 0 rgba(16, 33, 74, 0.1);
+}
+
+.cartoon-screen {
+  display: grid;
+  min-height: 312px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 5px solid white;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 22% 26%, rgba(255, 79, 139, 0.45) 0 34px, transparent 35px),
+    radial-gradient(circle at 78% 18%, rgba(255, 211, 54, 0.55) 0 46px, transparent 47px),
+    linear-gradient(135deg, #172653, #070d25 72%);
+  box-shadow: 0 10px 0 rgba(16, 33, 74, 0.16);
+}
+
+.cartoon-screen iframe,
+.cartoon-screen video {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #071026;
+}
+
+.cartoon-empty-screen {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  min-height: 100%;
+  padding: 24px;
+  color: white;
   text-align: center;
 }
 
-.parent-summary strong,
-.parent-stats strong {
-  color: var(--pink);
-  font-size: clamp(1.4rem, 4vw, 2.1rem);
+.cartoon-empty-screen span {
+  display: grid;
+  width: 76px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 5px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ff80ad, var(--pink));
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.22);
+  font-size: 2.5rem;
+  font-weight: 1000;
+}
+
+.cartoon-empty-screen strong,
+.cartoon-player-meta strong,
+.cartoon-library-head strong {
+  color: var(--ink);
+  font-size: clamp(1.45rem, 4vw, 2.2rem);
   line-height: 1;
 }
 
-.parent-actions-panel {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.cartoon-empty-screen strong {
+  color: white;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
 }
 
-.parent-actions-panel button {
+.cartoon-empty-screen small {
+  font-weight: 950;
+}
+
+.cartoon-player-meta,
+.cartoon-library-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cartoon-player-meta div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.cartoon-player-meta a {
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  color: white;
+  background: linear-gradient(180deg, #47b6ff, var(--blue));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.38), 0 6px 0 #0d55b2;
+  font-size: 0.86rem;
+  font-weight: 1000;
+  text-decoration: none;
+}
+
+.cartoon-form {
+  display: grid;
+  gap: 10px;
+}
+
+.cartoon-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.cartoon-form input {
+  width: 100%;
+  min-height: 48px;
+  border: 3px solid rgba(17, 28, 61, 0.1);
+  border-radius: 13px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 3px 0 rgba(17, 28, 61, 0.05);
+  font: inherit;
+  font-weight: 850;
+  padding: 0 12px;
+}
+
+.cartoon-form button {
+  min-height: 52px;
   background: linear-gradient(180deg, #74e35d, var(--green));
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--grass-dark);
 }
 
-.parent-actions-panel .danger-action {
-  background: linear-gradient(180deg, #ff80ad, var(--pink));
-  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.42), 0 7px 0 var(--pink-dark);
+.cartoon-message {
+  min-height: 20px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 950;
+}
+
+.cartoon-list {
+  display: grid;
+  gap: 10px;
+  max-height: 310px;
+  overflow: auto;
+  padding-right: 3px;
+}
+
+.cartoon-list-empty,
+.cartoon-list-item {
+  border: 3px solid rgba(17, 28, 61, 0.08);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 5px 0 rgba(16, 33, 74, 0.08);
+}
+
+.cartoon-list-empty {
+  display: grid;
+  gap: 6px;
+  min-height: 86px;
+  place-items: center;
+  padding: 14px;
+  text-align: center;
+}
+
+.cartoon-list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+}
+
+.cartoon-list-item.active {
+  border-color: rgba(255, 79, 139, 0.72);
+  box-shadow: 0 5px 0 rgba(194, 24, 91, 0.18);
+}
+
+.cartoon-list-item button {
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+
+.cartoon-list-item button:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cartoon-list-item strong,
+.cartoon-list-empty strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cartoon-remove {
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 11px !important;
+  color: white !important;
+  background: linear-gradient(180deg, #ff80ad, var(--pink)) !important;
+  box-shadow: 0 5px 0 var(--pink-dark);
+  font-size: 0.74rem !important;
+  font-weight: 1000 !important;
+  text-align: center !important;
 }
 
 .memory-panel {
@@ -2571,7 +2740,7 @@ button.friend-thumb {
   .hero-band .big-action,
   .game-head button,
   .sound-toggle,
-  .parent-toggle,
+  .cartoon-toggle,
   .window-actions,
   .window-action,
   .window-close {
@@ -2580,6 +2749,10 @@ button.friend-thumb {
 
   .top-actions {
     width: 100%;
+  }
+
+  .cartoon-panel {
+    grid-template-columns: 1fr;
   }
 
   .launch-grid {
@@ -2652,9 +2825,8 @@ button.friend-thumb {
   }
 
   .progress-strip,
-  .parent-summary,
-  .parent-stats,
-  .parent-actions-panel {
+  .cartoon-panel,
+  .cartoon-list-item {
     grid-template-columns: 1fr;
   }
 
@@ -2697,7 +2869,7 @@ button.friend-thumb {
     width: 100%;
   }
 
-  .parent-toggle,
+  .cartoon-toggle,
   .quest-action,
   .spotlight-panel button {
     width: 100%;
@@ -2708,9 +2880,18 @@ button.friend-thumb {
   .game-card,
   .drawing-panel,
   .roblox-panel,
-  .parent-panel {
+  .cartoon-panel {
     border-width: 3px;
     border-radius: 22px;
+  }
+
+  .cartoon-player-meta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cartoon-player-meta a {
+    text-align: center;
   }
 
   .memory-board {

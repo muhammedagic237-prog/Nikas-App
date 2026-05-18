@@ -2,13 +2,23 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type GameWindowKind = "memory" | "bubble" | "drawing" | "roblox" | "parent" | null;
-type PlayRoom = Exclude<GameWindowKind, "parent" | null>;
+type GameWindowKind = "memory" | "bubble" | "drawing" | "roblox" | "cartoons" | null;
+type PlayRoom = Exclude<GameWindowKind, "cartoons" | null>;
 type Card = { id: number; value: string; matched: boolean; accent: BubbleColor };
 type BubbleColor = "pink" | "blue" | "green" | "yellow" | "purple";
 type FriendColor = "pink" | "blue" | "green" | "yellow" | "purple" | "orange";
 type GalleryFriend = { name: string; role: string; sheetIndex?: number; variant?: number; color: FriendColor };
 type SoundName = "tap" | "pop" | "match" | "open" | "reset" | "draw" | "cycle";
+type CartoonVideo = {
+  addedAt: number;
+  embedUrl: string;
+  id: string;
+  kind: "iframe" | "video";
+  source: "YouTube" | "Vimeo" | "Video file";
+  sourceUrl: string;
+  title: string;
+};
+type ParsedCartoonLink = Omit<CartoonVideo, "addedAt" | "id" | "title">;
 type PlayerProgress = {
   memoryWins: number;
   memoryBestMoves: number;
@@ -43,6 +53,7 @@ const paintColors = ["#ff4f8b", "#31a8ff", "#6dde47", "#ffd336", "#8e5cff", "#20
 const bubbleColors: BubbleColor[] = ["pink", "blue", "green", "yellow", "purple"];
 const memorySymbols = ["gem", "star", "heart", "cube", "crown", "paint"];
 const progressKey = "nika-app-progress-v1";
+const cartoonLibraryKey = "nika-app-rumi-cartoons-v1";
 const defaultProgress: PlayerProgress = {
   memoryWins: 0,
   memoryBestMoves: 0,
@@ -85,6 +96,12 @@ export default function HomePage() {
   const [bubbleResetKey, setBubbleResetKey] = useState(0);
   const [progress, setProgress] = useState<PlayerProgress>(defaultProgress);
   const [progressLoaded, setProgressLoaded] = useState(false);
+  const [cartoons, setCartoons] = useState<CartoonVideo[]>([]);
+  const [cartoonsLoaded, setCartoonsLoaded] = useState(false);
+  const [selectedCartoonId, setSelectedCartoonId] = useState<string | null>(null);
+  const [cartoonTitle, setCartoonTitle] = useState("");
+  const [cartoonUrl, setCartoonUrl] = useState("");
+  const [cartoonMessage, setCartoonMessage] = useState("Add a video link to build Rumi's watch list.");
   const [soundOn, setSoundOn] = useState(true);
   const [paintColor, setPaintColor] = useState(paintColors[0]);
   const [brushSize, setBrushSize] = useState(8);
@@ -107,6 +124,30 @@ export default function HomePage() {
     if (!progressLoaded) return;
     window.localStorage.setItem(progressKey, JSON.stringify(progress));
   }, [progress, progressLoaded]);
+
+  useEffect(() => {
+    const storedCartoons = loadCartoons();
+    setCartoons(storedCartoons);
+    setSelectedCartoonId(storedCartoons[0]?.id ?? null);
+    setCartoonsLoaded(true);
+    if (storedCartoons.length > 0) setCartoonMessage(`${storedCartoons.length} saved cartoons`);
+  }, []);
+
+  useEffect(() => {
+    if (!cartoonsLoaded) return;
+    window.localStorage.setItem(cartoonLibraryKey, JSON.stringify(cartoons));
+  }, [cartoons, cartoonsLoaded]);
+
+  useEffect(() => {
+    if (cartoons.length === 0) {
+      if (selectedCartoonId) setSelectedCartoonId(null);
+      return;
+    }
+
+    if (!selectedCartoonId || !cartoons.some((cartoon) => cartoon.id === selectedCartoonId)) {
+      setSelectedCartoonId(cartoons[0].id);
+    }
+  }, [cartoons, selectedCartoonId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -139,13 +180,6 @@ export default function HomePage() {
 
   function resetBubbles() {
     playSound("reset");
-    setPoppedBubbles(0);
-    setBubbleResetKey((key) => key + 1);
-  }
-
-  function resetAllProgress() {
-    playSound("reset");
-    setProgress(defaultProgress);
     setPoppedBubbles(0);
     setBubbleResetKey((key) => key + 1);
   }
@@ -190,6 +224,43 @@ export default function HomePage() {
 
   function recordFriendView() {
     setProgress((current) => ({ ...current, friendViews: current.friendViews + 1 }));
+  }
+
+  function addCartoon(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const parsedLink = parseCartoonLink(cartoonUrl);
+    if (!parsedLink) {
+      setCartoonMessage("Use a YouTube, Vimeo, MP4, WebM, or OGG link.");
+      playSound("reset");
+      return;
+    }
+
+    const title = cartoonTitle.trim() || `Rumi Cartoon ${cartoons.length + 1}`;
+    const cartoon: CartoonVideo = {
+      ...parsedLink,
+      addedAt: Date.now(),
+      id: `cartoon-${Date.now()}-${nextRandomId()}`,
+      title: title.slice(0, 80)
+    };
+
+    setCartoons((current) => [cartoon, ...current].slice(0, 24));
+    setSelectedCartoonId(cartoon.id);
+    setCartoonTitle("");
+    setCartoonUrl("");
+    setCartoonMessage("Cartoon added");
+    playSound("match");
+  }
+
+  function removeCartoon(cartoonId: string) {
+    playSound("reset");
+    setCartoons((current) => current.filter((cartoon) => cartoon.id !== cartoonId));
+    setCartoonMessage("Cartoon removed");
+  }
+
+  function selectCartoon(cartoonId: string) {
+    setSelectedCartoonId(cartoonId);
+    playSound("tap");
   }
 
   function getAudioContext() {
@@ -336,6 +407,10 @@ export default function HomePage() {
   const questDoneCount = questItems.filter((item) => item.done).length;
   const questPercent = Math.round((questDoneCount / questItems.length) * 100);
   const nextQuestRoom = questItems.find((item) => !item.done)?.room ?? "memory";
+  const selectedCartoon = useMemo(
+    () => cartoons.find((cartoon) => cartoon.id === selectedCartoonId) ?? cartoons[0] ?? null,
+    [cartoons, selectedCartoonId]
+  );
   const activityCards = useMemo(
     () => [
       {
@@ -366,7 +441,7 @@ export default function HomePage() {
         detail: `${galleryFriends.length} friends | ${progress.friendViews} views`,
         icon: "F",
         key: "roblox" as const,
-        title: "Blocky Friends"
+        title: "Roblox Friends"
       }
     ],
     [bubbleLevel, progress]
@@ -411,8 +486,8 @@ export default function HomePage() {
           >
             {soundOn ? "Sound On" : "Sound Off"}
           </button>
-          <button className="parent-toggle" type="button" onClick={() => openWindow("parent")}>
-            Parent
+          <button className="cartoon-toggle" type="button" onClick={() => openWindow("cartoons")}>
+            Rumi Cartoon
           </button>
         </div>
       </header>
@@ -564,7 +639,7 @@ export default function HomePage() {
 
       {activeWindow === "roblox" && (
         <GameWindow
-          title="Blocky Friends"
+          title="Roblox Friends"
           detail={`${galleryFriends.length} original friends to view`}
           onClose={() => setActiveWindow(null)}
         >
@@ -572,15 +647,23 @@ export default function HomePage() {
         </GameWindow>
       )}
 
-      {activeWindow === "parent" && (
-        <GameWindow title="Parent Corner" detail="Progress and sound controls." onClose={() => setActiveWindow(null)}>
-          <ParentPanel
-            progress={progress}
-            rewardText={rewardText}
-            soundOn={soundOn}
-            totalScore={totalScore}
-            onResetProgress={resetAllProgress}
-            onToggleSound={toggleSound}
+      {activeWindow === "cartoons" && (
+        <GameWindow
+          title="Rumi Cartoon"
+          detail={`${cartoons.length} saved cartoon${cartoons.length === 1 ? "" : "s"} from the internet`}
+          onClose={() => setActiveWindow(null)}
+        >
+          <RumiCartoonPanel
+            cartoonMessage={cartoonMessage}
+            cartoonTitle={cartoonTitle}
+            cartoonUrl={cartoonUrl}
+            cartoons={cartoons}
+            selectedCartoon={selectedCartoon}
+            onAddCartoon={addCartoon}
+            onRemoveCartoon={removeCartoon}
+            onSelectCartoon={selectCartoon}
+            setCartoonTitle={setCartoonTitle}
+            setCartoonUrl={setCartoonUrl}
           />
         </GameWindow>
       )}
@@ -629,61 +712,127 @@ function GameWindow({
   );
 }
 
-function ParentPanel({
-  onResetProgress,
-  onToggleSound,
-  progress,
-  rewardText,
-  soundOn,
-  totalScore
+function RumiCartoonPanel({
+  cartoonMessage,
+  cartoonTitle,
+  cartoonUrl,
+  cartoons,
+  onAddCartoon,
+  onRemoveCartoon,
+  onSelectCartoon,
+  selectedCartoon,
+  setCartoonTitle,
+  setCartoonUrl
 }: {
-  onResetProgress: () => void;
-  onToggleSound: () => void;
-  progress: PlayerProgress;
-  rewardText: string;
-  soundOn: boolean;
-  totalScore: number;
+  cartoonMessage: string;
+  cartoonTitle: string;
+  cartoonUrl: string;
+  cartoons: CartoonVideo[];
+  onAddCartoon: (event: React.FormEvent<HTMLFormElement>) => void;
+  onRemoveCartoon: (cartoonId: string) => void;
+  onSelectCartoon: (cartoonId: string) => void;
+  selectedCartoon: CartoonVideo | null;
+  setCartoonTitle: (value: string) => void;
+  setCartoonUrl: (value: string) => void;
 }) {
   return (
-    <article className="parent-panel">
-      <div className="parent-summary">
-        <div>
-          <span>Total stars</span>
-          <strong>{totalScore}</strong>
+    <article className="cartoon-panel">
+      <section className="cartoon-player-card" aria-label="Rumi cartoon player">
+        <div className="cartoon-screen">
+          {selectedCartoon ? (
+            selectedCartoon.kind === "video" ? (
+              <video controls preload="metadata" src={selectedCartoon.embedUrl} />
+            ) : (
+              <iframe
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+                src={selectedCartoon.embedUrl}
+                title={selectedCartoon.title}
+              />
+            )
+          ) : (
+            <div className="cartoon-empty-screen">
+              <span aria-hidden="true">R</span>
+              <strong>Rumi Cartoon</strong>
+              <small>No cartoons saved yet</small>
+            </div>
+          )}
         </div>
-        <div>
-          <span>Status</span>
-          <strong>{rewardText}</strong>
-        </div>
-      </div>
 
-      <div className="parent-stats">
-        <div>
-          <span>Memory wins</span>
-          <strong>{progress.memoryWins}</strong>
+        <div className="cartoon-player-meta">
+          <div>
+            <span>{selectedCartoon?.source ?? "Watch List"}</span>
+            <strong>{selectedCartoon?.title ?? "Rumi's cartoon shelf"}</strong>
+          </div>
+          {selectedCartoon && (
+            <a href={selectedCartoon.sourceUrl} target="_blank" rel="noreferrer">
+              Open source
+            </a>
+          )}
         </div>
-        <div>
-          <span>Bubble best</span>
-          <strong>{progress.bubbleBest}</strong>
-        </div>
-        <div>
-          <span>Draw sessions</span>
-          <strong>{progress.drawingSessions}</strong>
-        </div>
-        <div>
-          <span>Friend views</span>
-          <strong>{progress.friendViews}</strong>
-        </div>
-      </div>
+      </section>
 
-      <div className="parent-actions-panel">
-        <button type="button" onClick={onToggleSound}>
-          {soundOn ? "Turn sounds off" : "Turn sounds on"}
-        </button>
-        <button className="danger-action" type="button" onClick={onResetProgress}>
-          Reset progress
-        </button>
-      </div>
+      <section className="cartoon-library-card" aria-label="Rumi cartoon library">
+        <div className="cartoon-library-head">
+          <span>Library</span>
+          <strong>{cartoons.length}</strong>
+        </div>
+
+        <form className="cartoon-form" onSubmit={onAddCartoon}>
+          <label>
+            <span>Title</span>
+            <input
+              maxLength={80}
+              onChange={(event) => setCartoonTitle(event.target.value)}
+              placeholder="Rumi Cartoon"
+              type="text"
+              value={cartoonTitle}
+            />
+          </label>
+          <label>
+            <span>Video URL</span>
+            <input
+              inputMode="url"
+              onChange={(event) => setCartoonUrl(event.target.value)}
+              placeholder="https://youtube.com/watch?v=..."
+              type="text"
+              value={cartoonUrl}
+            />
+          </label>
+          <button type="submit">Add cartoon</button>
+          <p className="cartoon-message" aria-live="polite">{cartoonMessage}</p>
+        </form>
+
+        <div className="cartoon-list" aria-label="Saved Rumi cartoons">
+          {cartoons.length === 0 ? (
+            <div className="cartoon-list-empty">
+              <strong>Empty list</strong>
+              <span>Add the first Rumi cartoon link.</span>
+            </div>
+          ) : (
+            cartoons.map((cartoon) => (
+              <div
+                className={selectedCartoon?.id === cartoon.id ? "cartoon-list-item active" : "cartoon-list-item"}
+                key={cartoon.id}
+              >
+                <button type="button" onClick={() => onSelectCartoon(cartoon.id)}>
+                  <span>{cartoon.source}</span>
+                  <strong>{cartoon.title}</strong>
+                </button>
+                <button
+                  className="cartoon-remove"
+                  type="button"
+                  onClick={() => onRemoveCartoon(cartoon.id)}
+                  aria-label={`Remove ${cartoon.title}`}
+                >
+                  Remove
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
     </article>
   );
 }
@@ -1440,6 +1589,40 @@ function friendAvatarClass(baseClass: string, friend: GalleryFriend) {
   return `${baseClass} ${friend.color}${generatedClass}`;
 }
 
+function loadCartoons(): CartoonVideo[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const stored = window.localStorage.getItem(cartoonLibraryKey);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.flatMap((item) => {
+      const cartoon = normalizeStoredCartoon(item);
+      return cartoon ? [cartoon] : [];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function normalizeStoredCartoon(item: unknown): CartoonVideo | null {
+  if (!item || typeof item !== "object") return null;
+
+  const stored = item as Partial<CartoonVideo>;
+  const parsedLink = parseCartoonLink(String(stored.sourceUrl || stored.embedUrl || ""));
+  const title = String(stored.title || "").trim();
+  if (!parsedLink || !title) return null;
+
+  return {
+    ...parsedLink,
+    addedAt: Number(stored.addedAt) || Date.now(),
+    id: String(stored.id || `cartoon-${Date.now()}-${nextRandomId()}`),
+    title: title.slice(0, 80)
+  };
+}
+
 function loadProgress(): PlayerProgress {
   if (typeof window === "undefined") return defaultProgress;
 
@@ -1458,6 +1641,86 @@ function loadProgress(): PlayerProgress {
   } catch {
     return defaultProgress;
   }
+}
+
+function parseCartoonLink(value: string): ParsedCartoonLink | null {
+  const url = normalizeHttpUrl(value);
+  if (!url) return null;
+
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  const youtubeId = extractYouTubeId(url, host);
+  if (youtubeId) {
+    return {
+      embedUrl: `https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&modestbranding=1`,
+      kind: "iframe",
+      source: "YouTube",
+      sourceUrl: `https://www.youtube.com/watch?v=${youtubeId}`
+    };
+  }
+
+  const vimeoId = extractVimeoId(url, host);
+  if (vimeoId) {
+    return {
+      embedUrl: `https://player.vimeo.com/video/${vimeoId}`,
+      kind: "iframe",
+      source: "Vimeo",
+      sourceUrl: `https://vimeo.com/${vimeoId}`
+    };
+  }
+
+  if (/\.(mp4|webm|ogg)(?:$|[?#])/i.test(url.href)) {
+    return {
+      embedUrl: url.href,
+      kind: "video",
+      source: "Video file",
+      sourceUrl: url.href
+    };
+  }
+
+  return null;
+}
+
+function normalizeHttpUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  try {
+    const hasProtocol = /^[a-z][a-z\d+.-]*:\/\//i.test(trimmed);
+    const url = new URL(hasProtocol ? trimmed : `https://${trimmed}`);
+    return url.protocol === "http:" || url.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+function extractYouTubeId(url: URL, host: string) {
+  const isYouTube = host === "youtube.com" || host.endsWith(".youtube.com") || host === "youtube-nocookie.com";
+  if (host === "youtu.be") {
+    const id = url.pathname.split("/").filter(Boolean)[0];
+    return isYouTubeId(id) ? id : null;
+  }
+  if (!isYouTube) return null;
+
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  const watchId = url.searchParams.get("v");
+  const pathId =
+    pathParts[0] === "embed" || pathParts[0] === "shorts" || pathParts[0] === "live"
+      ? pathParts[1]
+      : undefined;
+  const id = watchId || pathId;
+  return isYouTubeId(id) ? id : null;
+}
+
+function extractVimeoId(url: URL, host: string) {
+  const isVimeo = host === "vimeo.com" || host.endsWith(".vimeo.com");
+  if (!isVimeo) return null;
+
+  const id = url.pathname.split("/").filter(Boolean).reverse().find((part) => /^\d+$/.test(part));
+  return id ?? null;
+}
+
+function isYouTubeId(id: string | null | undefined) {
+  return Boolean(id && /^[a-zA-Z0-9_-]{11}$/.test(id));
 }
 
 function friendImageStyle(friend: GalleryFriend) {
