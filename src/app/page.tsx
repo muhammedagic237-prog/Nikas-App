@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type Section = "games" | "drawing" | "roblox";
+type GameWindowKind = "bubble" | "drawing" | null;
 type Card = { id: number; value: string; matched: boolean };
 type BubbleColor = "pink" | "blue" | "green" | "yellow" | "purple";
 type GameBubble = {
@@ -51,6 +52,7 @@ const galleryFriends = [
 export default function HomePage() {
   const [showSplash, setShowSplash] = useState(true);
   const [section, setSection] = useState<Section>("games");
+  const [activeWindow, setActiveWindow] = useState<GameWindowKind>(null);
   const [cards, setCards] = useState<Card[]>(() => shuffleCards());
   const [openCards, setOpenCards] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
@@ -65,7 +67,7 @@ export default function HomePage() {
   const allMatched = matchedCount === cards.length;
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setShowSplash(false), 2000);
+    const timer = window.setTimeout(() => setShowSplash(false), 3000);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -81,6 +83,22 @@ export default function HomePage() {
     context.lineCap = "round";
     context.lineJoin = "round";
   }, []);
+
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setActiveWindow(null);
+    }
+
+    if (activeWindow) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", closeOnEscape);
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [activeWindow]);
 
   useEffect(() => {
     if (openCards.length !== 2) return;
@@ -182,16 +200,21 @@ export default function HomePage() {
   return (
     <main className="nika-app">
       {showSplash && (
-        <div className="splash-screen" aria-label="Nika's App loading screen">
+        <div className="splash-screen" aria-label="Princess Nika loading screen">
           <div className="splash-cubes" aria-hidden="true">
             <span />
             <span />
             <span />
             <span />
           </div>
+          <div className="splash-character" aria-hidden="true">
+            <span className="splash-hi">Hi</span>
+            <span className="splash-arm" />
+            <span className="splash-face" />
+          </div>
           <h1>
-            <span>Nika&apos;s</span>
-            <span>App</span>
+            <span>Princess</span>
+            <span>Nika</span>
           </h1>
         </div>
       )}
@@ -203,9 +226,20 @@ export default function HomePage() {
         <nav className="section-tabs" aria-label="App sections">
           {(["games", "drawing", "roblox"] as Section[]).map((item) => (
             <button
-              className={section === item ? "tab active" : "tab"}
+              className={
+                (item === "drawing" ? activeWindow === "drawing" : section === item && !activeWindow)
+                  ? "tab active"
+                  : "tab"
+              }
               key={item}
-              onClick={() => setSection(item)}
+              onClick={() => {
+                if (item === "drawing") {
+                  setActiveWindow("drawing");
+                  return;
+                }
+                setActiveWindow(null);
+                setSection(item);
+              }}
               type="button"
             >
               {item === "games" ? "Games" : item === "drawing" ? "Drawing" : "Roblox"}
@@ -258,34 +292,30 @@ export default function HomePage() {
                 </div>
               </GameShell>
 
-              <GameShell
-                title="Bubble Pop"
-                detail={`${poppedBubbles} bubbles popped`}
-                action="Reset"
-                onAction={resetBubbles}
-              >
-                <BubblePopGame
-                  onPop={() => setPoppedBubbles((count) => count + 1)}
-                  popped={poppedBubbles}
-                  resetKey={bubbleResetKey}
-                />
-              </GameShell>
+              <article className="game-card play-launch-panel">
+                <div className="game-head">
+                  <div>
+                    <h2>Play Rooms</h2>
+                    <p>Open each game in a bigger mobile-friendly window.</p>
+                  </div>
+                </div>
+                <div className="launch-grid">
+                  <button className="launch-card bubble-launch" type="button" onClick={() => setActiveWindow("bubble")}>
+                    <span className="launch-icon" aria-hidden="true">B</span>
+                    <strong>Bubble Pop</strong>
+                    <small>{poppedBubbles} popped</small>
+                  </button>
+                  <button className="launch-card draw-launch" type="button" onClick={() => setActiveWindow("drawing")}>
+                    <span className="launch-icon" aria-hidden="true">D</span>
+                    <strong>Drawing Pad</strong>
+                    <small>Paint a block world</small>
+                  </button>
+                </div>
+              </article>
             </div>
           )}
 
-          {section === "drawing" && (
-            <DrawingPanel
-              brushSize={brushSize}
-              clearCanvas={clearCanvas}
-              draw={draw}
-              paintColor={paintColor}
-              setBrushSize={setBrushSize}
-              setPaintColor={setPaintColor}
-              startDrawing={startDrawing}
-              stopDrawing={stopDrawing}
-              canvasRef={canvasRef}
-            />
-          )}
+          {section === "drawing" && null}
 
           {section === "roblox" && <RobloxGallery />}
         </section>
@@ -315,11 +345,42 @@ export default function HomePage() {
 
           <div className="side-card safety-card">
             <span className="cube-stack" aria-hidden="true" />
-            <h2>Kid safe</h2>
-            <p>Offline-style play screen with no chat, ads, purchases, or outside links.</p>
+            <h2>Princess Nika</h2>
           </div>
         </aside>
       </div>
+
+      {activeWindow === "bubble" && (
+        <GameWindow
+          title="Bubble Pop"
+          detail={`${poppedBubbles} bubbles popped`}
+          action="Reset"
+          onAction={resetBubbles}
+          onClose={() => setActiveWindow(null)}
+        >
+          <BubblePopGame
+            onPop={() => setPoppedBubbles((count) => count + 1)}
+            popped={poppedBubbles}
+            resetKey={bubbleResetKey}
+          />
+        </GameWindow>
+      )}
+
+      {activeWindow === "drawing" && (
+        <GameWindow title="Drawing Pad" detail="Paint a colorful block world." onClose={() => setActiveWindow(null)}>
+          <DrawingPanel
+            brushSize={brushSize}
+            clearCanvas={clearCanvas}
+            draw={draw}
+            paintColor={paintColor}
+            setBrushSize={setBrushSize}
+            setPaintColor={setPaintColor}
+            startDrawing={startDrawing}
+            stopDrawing={stopDrawing}
+            canvasRef={canvasRef}
+          />
+        </GameWindow>
+      )}
     </main>
   );
 }
@@ -350,6 +411,47 @@ function GameShell({
       </div>
       {children}
     </article>
+  );
+}
+
+function GameWindow({
+  action,
+  children,
+  detail,
+  onAction,
+  onClose,
+  title
+}: {
+  action?: string;
+  children: React.ReactNode;
+  detail: string;
+  onAction?: () => void;
+  onClose: () => void;
+  title: string;
+}) {
+  return (
+    <div className="game-window-backdrop" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="game-window">
+        <div className="game-window-head">
+          <div>
+            <span>Play window</span>
+            <h2>{title}</h2>
+            <p>{detail}</p>
+          </div>
+          <div className="window-actions">
+            {action && onAction && (
+              <button className="window-action" type="button" onClick={onAction}>
+                {action}
+              </button>
+            )}
+            <button className="window-close" type="button" onClick={onClose} aria-label={`Close ${title}`}>
+              Close
+            </button>
+          </div>
+        </div>
+        <div className="game-window-body">{children}</div>
+      </div>
+    </div>
   );
 }
 
@@ -615,6 +717,19 @@ function DrawingPanel({
   startDrawing: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   stopDrawing: () => void;
 }) {
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+  }, [canvasRef]);
+
   return (
     <article className="drawing-panel">
       <div className="game-head">

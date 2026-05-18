@@ -81,12 +81,14 @@ button {
   z-index: 100;
   display: grid;
   place-items: center;
+  align-content: center;
+  gap: clamp(12px, 3vh, 24px);
   overflow: hidden;
   background:
     linear-gradient(45deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%) 0 0 / 64px 64px,
     linear-gradient(-45deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) 0 0 / 64px 64px,
     linear-gradient(180deg, #00a2ff, #7ddcff 48%, #34c746 49%, #1c8f35);
-  animation: splashExit 2s ease forwards;
+  animation: splashExit 3s ease forwards;
 }
 
 .splash-screen h1 {
@@ -99,7 +101,7 @@ button {
   text-transform: uppercase;
   letter-spacing: 0;
   transform: rotate(-2deg);
-  animation: splashTitle 1.65s ease-in-out both;
+  animation: splashTitle 2.35s ease-in-out both;
 }
 
 .splash-screen h1 span {
@@ -119,6 +121,57 @@ button {
   justify-self: center;
   background: linear-gradient(180deg, #ffd84d, #ff8d1f);
   box-shadow: 0 10px 0 #c35f00, 0 18px 30px rgba(17, 28, 61, 0.28);
+}
+
+.splash-character {
+  position: relative;
+  z-index: 2;
+  width: clamp(132px, 34vw, 220px);
+  aspect-ratio: 1;
+  animation: characterHello 2.4s ease-in-out both;
+}
+
+.splash-face {
+  position: absolute;
+  inset: 0;
+  border: 6px solid white;
+  border-radius: 18px;
+  background:
+    url("/assets/blocky-friends-gallery.png") 0% 0% / 300% 300% no-repeat,
+    linear-gradient(180deg, #ffb4d2, #ff4f8b);
+  box-shadow: 0 12px 0 rgba(17, 28, 61, 0.2), 0 0 0 7px rgba(255, 211, 54, 0.42);
+}
+
+.splash-arm {
+  position: absolute;
+  z-index: -1;
+  right: -20%;
+  top: 18%;
+  width: 34%;
+  height: 62%;
+  border: 6px solid white;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffd3b1, #ff9f73);
+  box-shadow: 0 8px 0 rgba(17, 28, 61, 0.16);
+  transform-origin: 18% 82%;
+  animation: waveArm 520ms ease-in-out 280ms infinite alternate;
+}
+
+.splash-hi {
+  position: absolute;
+  z-index: 3;
+  right: -18%;
+  top: -12%;
+  padding: 8px 14px;
+  border: 5px solid white;
+  border-radius: 16px;
+  color: white;
+  background: linear-gradient(180deg, #9e7cff, var(--purple));
+  box-shadow: 0 8px 0 #5c35c5;
+  font-size: clamp(1.35rem, 5vw, 2.4rem);
+  font-weight: 1000;
+  line-height: 1;
+  animation: hiBubble 1.05s ease-in-out infinite;
 }
 
 .splash-cubes {
@@ -200,10 +253,9 @@ button {
   border: 6px solid white;
   border-radius: 12px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.1), transparent),
-    linear-gradient(90deg, #7a4b2e 0 22%, #ffd3b1 23% 76%, #7a4b2e 77%),
-    linear-gradient(#ff74a8, #ff4f8b);
-  box-shadow: 0 8px 0 rgba(17, 28, 61, 0.2);
+    url("/assets/blocky-friends-gallery.png") 0% 0% / 300% 300% no-repeat,
+    linear-gradient(180deg, #ffb4d2, #ff4f8b);
+  box-shadow: 0 8px 0 rgba(17, 28, 61, 0.2), 0 0 0 5px rgba(255, 211, 54, 0.42);
 }
 
 .section-tabs {
@@ -340,6 +392,190 @@ button {
     linear-gradient(45deg, rgba(0, 119, 255, 0.12) 25%, transparent 25%) 0 0 / 28px 28px,
     linear-gradient(-45deg, rgba(255, 204, 36, 0.12) 25%, transparent 25%) 0 0 / 28px 28px;
   box-shadow: inset 0 5px 0 rgba(255, 255, 255, 0.42);
+}
+
+.play-launch-panel {
+  display: grid;
+  align-content: start;
+}
+
+.launch-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.launch-card {
+  position: relative;
+  display: grid;
+  min-height: clamp(220px, 38vw, 310px);
+  align-content: end;
+  justify-items: start;
+  gap: 8px;
+  overflow: hidden;
+  padding: 18px;
+  border: 5px solid #ffffff;
+  border-radius: 18px;
+  color: white;
+  text-align: left;
+  box-shadow: inset 0 5px 0 rgba(255, 255, 255, 0.34), 0 10px 0 rgba(17, 28, 61, 0.16);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.launch-card:hover {
+  transform: translateY(-3px);
+  box-shadow: inset 0 5px 0 rgba(255, 255, 255, 0.34), 0 13px 0 rgba(17, 28, 61, 0.16);
+}
+
+.launch-card::before {
+  content: "";
+  position: absolute;
+  inset: 14px 14px auto auto;
+  width: clamp(92px, 22vw, 150px);
+  aspect-ratio: 1;
+  border: 5px solid rgba(255, 255, 255, 0.62);
+  border-radius: 18px;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%) 0 0 / 20px 20px,
+    rgba(255, 255, 255, 0.18);
+}
+
+.bubble-launch {
+  background:
+    radial-gradient(circle at 82% 22%, rgba(255, 255, 255, 0.92) 0 20px, transparent 21px),
+    radial-gradient(circle at 68% 38%, rgba(188, 245, 255, 0.78) 0 36px, transparent 37px),
+    linear-gradient(180deg, #73dcff, #1f8dff);
+}
+
+.draw-launch {
+  background:
+    linear-gradient(130deg, rgba(255, 255, 255, 0.28) 0 18%, transparent 19%),
+    linear-gradient(180deg, #ff80ad, #8e5cff);
+}
+
+.launch-icon {
+  display: grid;
+  width: 58px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 4px solid white;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.24);
+  font-size: 2rem;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 4px 0 rgba(17, 28, 61, 0.2);
+}
+
+.launch-card strong {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(1.9rem, 6vw, 3rem);
+  line-height: 0.92;
+  text-shadow: 0 5px 0 rgba(17, 28, 61, 0.22);
+}
+
+.launch-card small {
+  position: relative;
+  z-index: 1;
+  font-size: 1rem;
+  font-weight: 1000;
+}
+
+.game-window-backdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  padding: clamp(10px, 3vw, 22px);
+  background: rgba(8, 23, 58, 0.62);
+  backdrop-filter: blur(10px);
+}
+
+.game-window {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  border: 5px solid rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(222, 245, 255, 0.94)),
+    linear-gradient(45deg, rgba(31, 141, 255, 0.13) 25%, transparent 25%) 0 0 / 28px 28px;
+  box-shadow: 0 24px 80px rgba(8, 23, 58, 0.42), inset 0 5px 0 rgba(255, 255, 255, 0.52);
+}
+
+.game-window-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: clamp(12px, 3vw, 18px);
+  border-bottom: 4px solid rgba(17, 28, 61, 0.1);
+}
+
+.game-window-head span {
+  color: var(--pink);
+  font-size: 0.78rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.game-window-head h2 {
+  margin: 0;
+  font-size: clamp(2rem, 7vw, 3.9rem);
+  line-height: 0.9;
+  text-shadow: 0 4px 0 rgba(17, 28, 61, 0.12);
+}
+
+.game-window-head p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.window-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.window-action,
+.window-close {
+  min-height: 50px;
+  padding: 0 16px;
+  border: 4px solid white;
+  border-radius: 12px;
+  color: white;
+  background: linear-gradient(180deg, #9e7cff, var(--purple));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.4), 0 7px 0 #5c35c5;
+  font-weight: 1000;
+}
+
+.window-close {
+  background: linear-gradient(180deg, #ff80ad, var(--pink));
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.4), 0 7px 0 var(--pink-dark);
+}
+
+.game-window-body {
+  min-height: 0;
+  overflow: auto;
+  padding: clamp(10px, 2.5vw, 16px);
+}
+
+.game-window .bubble-game {
+  min-height: min(76vh, 780px);
+}
+
+.game-window .bubble-canvas {
+  height: min(76vh, 780px);
+}
+
+.game-window .drawing-panel {
+  min-height: 100%;
+  border-color: rgba(17, 28, 61, 0.08);
+  box-shadow: none;
 }
 
 .game-head {
@@ -920,15 +1156,22 @@ button {
 }
 
 .character-viewer {
+  position: relative;
   display: grid;
-  gap: 12px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  grid-template-columns: minmax(58px, auto) minmax(0, 1fr) minmax(58px, auto);
   align-items: center;
+  padding: clamp(10px, 2vw, 16px);
+  border: 4px solid rgba(17, 28, 61, 0.08);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(223, 244, 255, 0.74)),
+    linear-gradient(45deg, rgba(31, 141, 255, 0.12) 25%, transparent 25%) 0 0 / 28px 28px;
 }
 
 .viewer-arrow {
-  min-height: 74px;
-  padding: 0 14px;
+  min-height: 86px;
+  padding: 0 16px;
   border: 4px solid rgba(255, 255, 255, 0.86);
   border-radius: 12px;
   color: white;
@@ -938,19 +1181,47 @@ button {
 }
 
 .viewer-card {
+  position: relative;
   display: grid;
   gap: 14px;
   grid-template-columns: minmax(150px, 0.82fr) minmax(0, 1fr);
   align-items: center;
-  min-height: 340px;
-  padding: 16px;
+  min-height: clamp(360px, 48vw, 520px);
+  overflow: hidden;
+  padding: clamp(16px, 3vw, 26px);
   border: 5px solid white;
-  border-radius: 18px;
+  border-radius: 22px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.28)),
     linear-gradient(45deg, rgba(255, 255, 255, 0.18) 25%, transparent 25%) 0 0 / 34px 34px,
     linear-gradient(180deg, #7edcff, #35c344);
   box-shadow: 0 10px 0 rgba(17, 28, 61, 0.16), 0 24px 34px rgba(17, 28, 61, 0.18);
+}
+
+.viewer-card::before,
+.viewer-card::after {
+  content: "";
+  position: absolute;
+  border: 5px solid rgba(255, 255, 255, 0.44);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.16);
+  pointer-events: none;
+}
+
+.viewer-card::before {
+  width: 92px;
+  height: 92px;
+  right: 20px;
+  top: 18px;
+  transform: rotate(10deg);
+}
+
+.viewer-card::after {
+  width: 66px;
+  height: 66px;
+  right: 110px;
+  bottom: 22px;
+  transform: rotate(-12deg);
 }
 
 .viewer-card.pink {
@@ -978,13 +1249,25 @@ button {
 }
 
 .viewer-portrait {
+  position: relative;
+  z-index: 1;
   width: 100%;
+  max-width: 390px;
+  justify-self: center;
   aspect-ratio: 1;
-  border: 5px solid rgba(255, 255, 255, 0.9);
-  border-radius: 14px;
+  border: 6px solid rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
   background-repeat: no-repeat;
   background-size: 300% 300%;
-  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.42), 0 9px 0 rgba(17, 28, 61, 0.13);
+  box-shadow:
+    inset 0 4px 0 rgba(255, 255, 255, 0.48),
+    0 9px 0 rgba(17, 28, 61, 0.13),
+    0 22px 32px rgba(17, 28, 61, 0.14);
+}
+
+.viewer-copy {
+  position: relative;
+  z-index: 1;
 }
 
 .viewer-copy span {
@@ -1014,11 +1297,11 @@ button {
 
 .swipe-rail {
   display: grid;
-  grid-auto-columns: minmax(128px, 38%);
+  grid-auto-columns: minmax(150px, 27%);
   grid-auto-flow: column;
   gap: 12px;
   overflow-x: auto;
-  padding: 4px 4px 14px;
+  padding: 6px 4px 18px;
   scroll-snap-type: x mandatory;
   scrollbar-width: thin;
 }
@@ -1027,16 +1310,18 @@ button {
   scroll-snap-align: start;
   display: grid;
   gap: 8px;
-  padding: 8px;
+  padding: 10px;
   border: 4px solid rgba(255, 255, 255, 0.78);
-  border-radius: 14px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.72);
   box-shadow: 0 7px 0 rgba(17, 28, 61, 0.11);
+  transition: transform 140ms ease, box-shadow 140ms ease;
 }
 
 .rail-card.active {
   outline: 4px solid var(--yellow);
   transform: translateY(-2px);
+  box-shadow: 0 10px 0 rgba(17, 28, 61, 0.14), 0 18px 28px rgba(17, 28, 61, 0.16);
 }
 
 .rail-card strong {
@@ -1236,7 +1521,7 @@ button.friend-thumb {
 
 @keyframes splashExit {
   0%,
-  82% {
+  78% {
     opacity: 1;
     transform: scale(1);
   }
@@ -1245,6 +1530,48 @@ button.friend-thumb {
     opacity: 0;
     transform: scale(1.04);
     visibility: hidden;
+  }
+}
+
+@keyframes characterHello {
+  0% {
+    opacity: 0;
+    transform: translateY(34px) scale(0.74) rotate(-8deg);
+  }
+
+  28% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08) rotate(3deg);
+  }
+
+  68% {
+    transform: translateY(-8px) scale(1) rotate(-2deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(-2deg);
+  }
+}
+
+@keyframes waveArm {
+  0% {
+    transform: rotate(-20deg);
+  }
+
+  100% {
+    transform: rotate(24deg);
+  }
+}
+
+@keyframes hiBubble {
+  0%,
+  100% {
+    transform: translateY(0) rotate(6deg) scale(1);
+  }
+
+  50% {
+    transform: translateY(-7px) rotate(-3deg) scale(1.06);
   }
 }
 
@@ -1444,14 +1771,22 @@ button.friend-thumb {
 @media (max-width: 780px) {
   .app-header,
   .hero-band,
-  .game-head {
+  .game-head,
+  .game-window-head {
     align-items: stretch;
     flex-direction: column;
   }
 
   .hero-band .big-action,
-  .game-head button {
+  .game-head button,
+  .window-actions,
+  .window-action,
+  .window-close {
     width: 100%;
+  }
+
+  .launch-grid {
+    grid-template-columns: 1fr;
   }
 
   .side-panel {
@@ -1475,6 +1810,10 @@ button.friend-thumb {
 
   .viewer-copy {
     text-align: center;
+  }
+
+  .swipe-rail {
+    grid-auto-columns: minmax(142px, 44%);
   }
 }
 
@@ -1538,6 +1877,46 @@ button.friend-thumb {
   .bubble-stage {
     min-height: 620px;
     border-width: 3px;
+  }
+
+  .game-window-backdrop {
+    padding: 0;
+  }
+
+  .game-window {
+    min-height: 100dvh;
+    border-width: 0;
+    border-radius: 0;
+  }
+
+  .game-window-head {
+    padding: 12px;
+  }
+
+  .game-window-body {
+    padding: 8px;
+  }
+
+  .game-window .bubble-game {
+    min-height: calc(100dvh - 156px);
+    border-width: 3px;
+  }
+
+  .game-window .bubble-canvas {
+    height: calc(100dvh - 156px);
+  }
+
+  .game-window .drawing-panel {
+    padding: 10px;
+  }
+
+  .game-window .drawing-canvas {
+    min-height: calc(100dvh - 310px);
+  }
+
+  .launch-card {
+    min-height: 190px;
+    border-width: 4px;
   }
 
   .bubble-board {
