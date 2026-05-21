@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type GameWindowKind = "memory" | "bubble" | "drawing" | "roblox" | "cartoons" | null;
-type PlayRoom = Exclude<GameWindowKind, "cartoons" | null>;
+type PlayRoom = Exclude<GameWindowKind, null>;
 type Card = { id: number; value: string; matched: boolean; accent: BubbleColor };
 type BubbleColor = "pink" | "blue" | "green" | "yellow" | "purple";
 type FriendColor = "pink" | "blue" | "green" | "yellow" | "purple" | "orange";
@@ -11,10 +11,13 @@ type GalleryFriend = { name: string; role: string; sheetIndex?: number; variant?
 type SoundName = "tap" | "pop" | "match" | "open" | "reset" | "draw" | "cycle";
 type CartoonVideo = {
   addedAt: number;
+  description?: string;
+  duration?: string;
   embedUrl: string;
   id: string;
   kind: "iframe" | "video";
-  source: "YouTube" | "Vimeo" | "Video file";
+  local?: boolean;
+  source: "Local file" | "YouTube" | "Vimeo" | "Video file";
   sourceUrl: string;
   title: string;
 };
@@ -24,6 +27,7 @@ type PlayerProgress = {
   memoryBestMoves: number;
   bubbleBest: number;
   bubbleTotal: number;
+  cartoonViews: number;
   drawingSessions: number;
   friendViews: number;
 };
@@ -59,9 +63,36 @@ const defaultProgress: PlayerProgress = {
   memoryBestMoves: 0,
   bubbleBest: 0,
   bubbleTotal: 0,
+  cartoonViews: 0,
   drawingSessions: 0,
   friendViews: 0
 };
+const localRumiCartoons: CartoonVideo[] = [
+  {
+    addedAt: 0,
+    description: "Offline cartoon found on this PC and bundled for smooth playback.",
+    duration: "8 min 37 sec",
+    embedUrl: "/videos/starlight-ride.mp4",
+    id: "local-rumi-starlight-ride",
+    kind: "video",
+    local: true,
+    source: "Local file",
+    sourceUrl: "/videos/starlight-ride.mp4",
+    title: "RUMI 1"
+  },
+  {
+    addedAt: 0,
+    description: "Offline cartoon found on this PC and bundled for smooth playback.",
+    duration: "13 min 11 sec",
+    embedUrl: "/videos/magic-garden.mp4",
+    id: "local-rumi-magic-garden",
+    kind: "video",
+    local: true,
+    source: "Local file",
+    sourceUrl: "/videos/magic-garden.mp4",
+    title: "RUMI 2"
+  }
+];
 const galleryFriends: GalleryFriend[] = [
   { name: "Pink Explorer", role: "Crystal cave scout", sheetIndex: 0, color: "pink" },
   { name: "Blue Builder", role: "Tower maker", sheetIndex: 1, color: "blue" },
@@ -126,16 +157,16 @@ export default function HomePage() {
   }, [progress, progressLoaded]);
 
   useEffect(() => {
-    const storedCartoons = loadCartoons();
+    const storedCartoons = mergeCartoonLibrary(loadCartoons());
     setCartoons(storedCartoons);
     setSelectedCartoonId(storedCartoons[0]?.id ?? null);
     setCartoonsLoaded(true);
-    if (storedCartoons.length > 0) setCartoonMessage(`${storedCartoons.length} saved cartoons`);
+    setCartoonMessage(`${localRumiCartoons.length} offline cartoons ready`);
   }, []);
 
   useEffect(() => {
     if (!cartoonsLoaded) return;
-    window.localStorage.setItem(cartoonLibraryKey, JSON.stringify(cartoons));
+    window.localStorage.setItem(cartoonLibraryKey, JSON.stringify(cartoons.filter((cartoon) => !cartoon.local)));
   }, [cartoons, cartoonsLoaded]);
 
   useEffect(() => {
@@ -201,6 +232,9 @@ export default function HomePage() {
     if (windowName === "roblox") {
       setProgress((current) => ({ ...current, friendViews: current.friendViews + 1 }));
     }
+    if (windowName === "cartoons") {
+      setProgress((current) => ({ ...current, cartoonViews: current.cartoonViews + 1 }));
+    }
     setActiveWindow(windowName);
   }
 
@@ -236,7 +270,7 @@ export default function HomePage() {
       return;
     }
 
-    const title = cartoonTitle.trim() || `Rumi Cartoon ${cartoons.length + 1}`;
+    const title = cartoonTitle.trim() || `Rumi Cartoon ${cartoons.filter((cartoon) => !cartoon.local).length + 1}`;
     const cartoon: CartoonVideo = {
       ...parsedLink,
       addedAt: Date.now(),
@@ -244,7 +278,7 @@ export default function HomePage() {
       title: title.slice(0, 80)
     };
 
-    setCartoons((current) => [cartoon, ...current].slice(0, 24));
+    setCartoons((current) => [cartoon, ...current].slice(0, 26));
     setSelectedCartoonId(cartoon.id);
     setCartoonTitle("");
     setCartoonUrl("");
@@ -253,6 +287,12 @@ export default function HomePage() {
   }
 
   function removeCartoon(cartoonId: string) {
+    if (cartoons.find((cartoon) => cartoon.id === cartoonId)?.local) {
+      setCartoonMessage("Offline Rumi cartoons stay in the app.");
+      playSound("tap");
+      return;
+    }
+
     playSound("reset");
     setCartoons((current) => current.filter((cartoon) => cartoon.id !== cartoonId));
     setCartoonMessage("Cartoon removed");
@@ -396,13 +436,19 @@ export default function HomePage() {
   }
 
   const rewardText = useMemo(() => {
+    if (progress.cartoonViews >= 4) return "Rumi theater star";
     if (progress.memoryWins >= 3) return "Memory master";
     if (progress.bubbleBest >= 45) return "Bubble champion";
     if (progress.friendViews >= 24) return "Friend expert";
     if (progress.drawingSessions >= 5) return "Art princess";
     return "Ready to play";
   }, [progress]);
-  const totalScore = progress.memoryWins * 12 + progress.bubbleBest + progress.drawingSessions + progress.friendViews;
+  const totalScore =
+    progress.memoryWins * 12 +
+    progress.bubbleBest +
+    progress.drawingSessions +
+    progress.friendViews +
+    progress.cartoonViews * 4;
   const questItems = useMemo(() => createQuestItems(progress), [progress]);
   const questDoneCount = questItems.filter((item) => item.done).length;
   const questPercent = Math.round((questDoneCount / questItems.length) * 100);
@@ -442,9 +488,16 @@ export default function HomePage() {
         icon: "F",
         key: "roblox" as const,
         title: "Roblox Friends"
+      },
+      {
+        className: "cartoons-menu",
+        detail: `${localRumiCartoons.length} offline | ${cartoons.length} total`,
+        icon: "R",
+        key: "cartoons" as const,
+        title: "Rumi Cartoon"
       }
     ],
-    [bubbleLevel, progress]
+    [bubbleLevel, cartoons.length, progress]
   );
 
   return (
@@ -509,6 +562,10 @@ export default function HomePage() {
                   <strong>{questDoneCount}/{questItems.length}</strong>
                 </div>
                 <div>
+                  <span>Cartoons</span>
+                  <strong>{localRumiCartoons.length}</strong>
+                </div>
+                <div>
                   <span>Friends</span>
                   <strong>{Math.min(progress.friendViews, galleryFriends.length)}</strong>
                 </div>
@@ -546,6 +603,11 @@ export default function HomePage() {
                       aria-hidden="true"
                     />
                   )}
+                  {activity.key === "cartoons" && (
+                    <span className="menu-cartoon-preview" aria-hidden="true">
+                      <span>Play</span>
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -576,13 +638,15 @@ export default function HomePage() {
               </button>
             </aside>
 
-            <aside className="spotlight-panel" aria-label="Friend spotlight">
-              <span className="spotlight-avatar" style={friendImageStyle(galleryFriends[3])} aria-hidden="true" />
-              <span>Friend Spotlight</span>
-              <strong>{galleryFriends[3].name}</strong>
-              <small>{galleryFriends[3].role}</small>
-              <button type="button" onClick={() => openWindow("roblox")}>
-                Meet friends
+            <aside className="spotlight-panel cartoon-spotlight" aria-label="Rumi cartoon spotlight">
+              <span className="cartoon-spotlight-screen" aria-hidden="true">
+                <span />
+              </span>
+              <span>Rumi Theater</span>
+              <strong>{localRumiCartoons.length} offline videos</strong>
+              <small>Ready from this PC, with room for more internet links.</small>
+              <button type="button" onClick={() => openWindow("cartoons")}>
+                Watch cartoons
               </button>
             </aside>
           </div>
@@ -650,7 +714,7 @@ export default function HomePage() {
       {activeWindow === "cartoons" && (
         <GameWindow
           title="Rumi Cartoon"
-          detail={`${cartoons.length} saved cartoon${cartoons.length === 1 ? "" : "s"} from the internet`}
+          detail={`${localRumiCartoons.length} offline | ${cartoons.length} total cartoons`}
           onClose={() => setActiveWindow(null)}
         >
           <RumiCartoonPanel
@@ -741,7 +805,7 @@ function RumiCartoonPanel({
         <div className="cartoon-screen">
           {selectedCartoon ? (
             selectedCartoon.kind === "video" ? (
-              <video controls preload="metadata" src={selectedCartoon.embedUrl} />
+              <video controls playsInline preload="metadata" src={selectedCartoon.embedUrl} />
             ) : (
               <iframe
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -764,10 +828,15 @@ function RumiCartoonPanel({
           <div>
             <span>{selectedCartoon?.source ?? "Watch List"}</span>
             <strong>{selectedCartoon?.title ?? "Rumi's cartoon shelf"}</strong>
+            {selectedCartoon && [selectedCartoon.duration, selectedCartoon.description].some(Boolean) && (
+              <small>
+                {[selectedCartoon.duration, selectedCartoon.description].filter(Boolean).join(" | ")}
+              </small>
+            )}
           </div>
           {selectedCartoon && (
             <a href={selectedCartoon.sourceUrl} target="_blank" rel="noreferrer">
-              Open source
+              {selectedCartoon.local ? "Open file" : "Open source"}
             </a>
           )}
         </div>
@@ -819,15 +888,20 @@ function RumiCartoonPanel({
                 <button type="button" onClick={() => onSelectCartoon(cartoon.id)}>
                   <span>{cartoon.source}</span>
                   <strong>{cartoon.title}</strong>
+                  {cartoon.duration && <small>{cartoon.duration}</small>}
                 </button>
-                <button
-                  className="cartoon-remove"
-                  type="button"
-                  onClick={() => onRemoveCartoon(cartoon.id)}
-                  aria-label={`Remove ${cartoon.title}`}
-                >
-                  Remove
-                </button>
+                {cartoon.local ? (
+                  <span className="cartoon-local-pill">Offline</span>
+                ) : (
+                  <button
+                    className="cartoon-remove"
+                    type="button"
+                    onClick={() => onRemoveCartoon(cartoon.id)}
+                    aria-label={`Remove ${cartoon.title}`}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             ))
           )}
@@ -1466,6 +1540,12 @@ function createQuestItems(progress: PlayerProgress): QuestItem[] {
       done: progress.friendViews >= 5,
       label: "Meet 5 Friends",
       room: "roblox"
+    },
+    {
+      detail: progress.cartoonViews > 0 ? `${progress.cartoonViews} cartoon visits` : "Open Rumi Theater",
+      done: progress.cartoonViews > 0,
+      label: "Watch Rumi",
+      room: "cartoons"
     }
   ];
 }
@@ -1607,6 +1687,20 @@ function loadCartoons(): CartoonVideo[] {
   }
 }
 
+function mergeCartoonLibrary(savedCartoons: CartoonVideo[]) {
+  const known = new Set(localRumiCartoons.map((cartoon) => cartoon.id));
+  const knownSources = new Set(localRumiCartoons.map((cartoon) => cartoon.sourceUrl));
+  const customCartoons = savedCartoons.filter((cartoon) => {
+    if (cartoon.local) return false;
+    if (known.has(cartoon.id) || knownSources.has(cartoon.sourceUrl)) return false;
+    known.add(cartoon.id);
+    knownSources.add(cartoon.sourceUrl);
+    return true;
+  });
+
+  return [...localRumiCartoons, ...customCartoons].slice(0, 26);
+}
+
 function normalizeStoredCartoon(item: unknown): CartoonVideo | null {
   if (!item || typeof item !== "object") return null;
 
@@ -1635,6 +1729,7 @@ function loadProgress(): PlayerProgress {
       memoryBestMoves: Number(parsed.memoryBestMoves) || 0,
       bubbleBest: Number(parsed.bubbleBest) || 0,
       bubbleTotal: Number(parsed.bubbleTotal) || 0,
+      cartoonViews: Number(parsed.cartoonViews) || 0,
       drawingSessions: Number(parsed.drawingSessions) || 0,
       friendViews: Number(parsed.friendViews) || 0
     };
